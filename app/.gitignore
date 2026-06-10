@@ -1,0 +1,11 @@
+# Android Kotlin generated/build files
+.gradle/
+build/
+*/build/
+**/build/
+**/generated/
+**/intermediates/
+**/tmp/
+**/kapt/
+**/kapt3/
+**/ksp/
