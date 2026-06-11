@@ -37,14 +37,13 @@ import org.linphone.LinphoneApplication.Companion.coreContext
 import org.linphone.LinphoneApplication.Companion.corePreferences
 import org.linphone.R
 import org.linphone.core.tools.Log
-import org.linphone.databinding.AssistantLandingFragmentBinding
-import org.linphone.ui.GenericActivity
 import org.linphone.ui.GenericFragment
 import org.linphone.ui.assistant.model.AcceptConditionsAndPolicyDialogModel
 import org.linphone.ui.assistant.viewmodel.AccountLoginViewModel
 import org.linphone.utils.DialogUtils
 import org.linphone.utils.PhoneNumberUtils
 import androidx.core.net.toUri
+import org.linphone.databinding.AssistantLoginFragmentBinding
 
 @UiThread
 class LandingFragment : GenericFragment() {
@@ -52,7 +51,7 @@ class LandingFragment : GenericFragment() {
         private const val TAG = "[Landing Fragment]"
     }
 
-    private lateinit var binding: AssistantLandingFragmentBinding
+    private lateinit var binding: AssistantLoginFragmentBinding
 
     private val viewModel: AccountLoginViewModel by navGraphViewModels(
         R.id.assistant_nav_graph
@@ -63,7 +62,7 @@ class LandingFragment : GenericFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = AssistantLandingFragmentBinding.inflate(layoutInflater)
+        binding = AssistantLoginFragmentBinding.inflate(layoutInflater)
         return binding.root
     }
 
@@ -102,21 +101,21 @@ class LandingFragment : GenericFragment() {
             }
         }
 
-        binding.setThirdPartySipAccountLoginClickListener {
-            if (viewModel.conditionsAndPrivacyPolicyAccepted) {
-                goToLoginThirdPartySipAccountFragment(false)
-            } else {
-                showAcceptConditionsAndPrivacyDialog(goToThirdPartySipAccountLogin = true)
-            }
-        }
+//        binding.setThirdPartySipAccountLoginClickListener {
+//            if (viewModel.conditionsAndPrivacyPolicyAccepted) {
+//                goToLoginThirdPartySipAccountFragment(false)
+//            } else {
+//                showAcceptConditionsAndPrivacyDialog(goToThirdPartySipAccountLogin = true)
+//            }
+//        }
 
-        binding.setForgottenPasswordClickListener {
-            if (findNavController().currentDestination?.id == R.id.landingFragment) {
-                val action =
-                    LandingFragmentDirections.actionLandingFragmentToRecoverAccountFragment()
-                findNavController().navigate(action)
-            }
-        }
+//        binding.setForgottenPasswordClickListener {
+//            if (findNavController().currentDestination?.id == R.id.landingFragment) {
+//                val action =
+//                    LandingFragmentDirections.actionLandingFragmentToRecoverAccountFragment()
+//                findNavController().navigate(action)
+//            }
+//        }
 
         viewModel.showPassword.observe(viewLifecycleOwner) {
             lifecycleScope.launch {
@@ -132,20 +131,20 @@ class LandingFragment : GenericFragment() {
             }
         }
 
-        viewModel.accountLoginErrorEvent.observe(viewLifecycleOwner) {
-            it.consume { message ->
-                (requireActivity() as GenericActivity).showRedToast(
-                    message,
-                    R.drawable.warning_circle
-                )
-            }
-        }
+//        viewModel.accountLoginErrorEvent.observe(viewLifecycleOwner) {
+//            it.consume { message ->
+//                (requireActivity() as GenericActivity).showRedToast(
+//                    message,
+//                    R.drawable.warning_circle
+//                )
+//            }
+//        }
 
-        viewModel.skipLandingToThirdPartySipAccountEvent.observe(viewLifecycleOwner) {
-            it.consume {
-                goToLoginThirdPartySipAccountFragment(true)
-            }
-        }
+//        viewModel.skipLandingToThirdPartySipAccountEvent.observe(viewLifecycleOwner) {
+//            it.consume {
+//                goToLoginThirdPartySipAccountFragment(true)
+//            }
+//        }
 
         val telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         val countryIso = telephonyManager.networkCountryIso

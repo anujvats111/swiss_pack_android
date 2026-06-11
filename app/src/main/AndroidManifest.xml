@@ -67,6 +67,20 @@
             android:value="1"/>-->
 
         <activity
+            android:name=".ui.more.SplashActivity"
+            android:theme="@style/Theme.CallnFaxSplash"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+
+        <activity
             android:name=".ui.main.MainActivity"
             android:theme="@style/AppSplashScreenTheme"
             android:windowSoftInputMode="adjustResize"
@@ -77,10 +91,10 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW_LOCUS" />

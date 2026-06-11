@@ -91,6 +91,18 @@
         <item name="android:paddingStart">@dimen/primary_secondary_buttons_label_start_end_padding</item>
         <item name="android:paddingEnd">@dimen/primary_secondary_buttons_label_start_end_padding</item>
     </style>
+
+    <style name="primary_button_label_style2">
+        <item name="android:fontFamily">@font/noto_sans_600</item>
+        <item name="android:textColor">@color/bc_black</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/primary_button_background</item>
+        <item name="android:paddingTop">@dimen/primary_secondary_buttons_label_padding</item>
+        <item name="android:paddingBottom">@dimen/primary_secondary_buttons_label_padding</item>
+        <item name="android:paddingStart">@dimen/primary_secondary_buttons_label_start_end_padding</item>
+        <item name="android:paddingEnd">@dimen/primary_secondary_buttons_label_start_end_padding</item>
+    </style>
     <style name="secondary_button_label_style">
         <item name="android:fontFamily">@font/noto_sans_600</item>
         <item name="android:textColor">@color/secondary_button_label_color</item>
@@ -102,6 +114,19 @@
         <item name="android:paddingStart">@dimen/primary_secondary_buttons_label_start_end_padding</item>
         <item name="android:paddingEnd">@dimen/primary_secondary_buttons_label_start_end_padding</item>
     </style>
+
+    <style name="secondary_button_label_style2">
+        <item name="android:fontFamily">@font/noto_sans_600</item>
+        <item name="android:textColor">@color/bc_black</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/outline</item>
+        <item name="android:paddingTop">@dimen/primary_secondary_buttons_label_padding</item>
+        <item name="android:paddingBottom">@dimen/primary_secondary_buttons_label_padding</item>
+        <item name="android:paddingStart">@dimen/primary_secondary_buttons_label_start_end_padding</item>
+        <item name="android:paddingEnd">@dimen/primary_secondary_buttons_label_start_end_padding</item>
+    </style>
+
     <style name="tertiary_button_label_style">
         <item name="android:fontFamily">@font/noto_sans_600</item>
         <item name="android:textColor">@color/tertiary_button_label_color</item>
@@ -259,4 +284,33 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">@dimen/call_dtmf_button_size</item>
     </style>
+
+    <style name="HomeSectionTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">22dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="HomeMenuRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">start</item>
+    </style>
+
+    <style name="HomeMenuTile">
+        <item name="android:layout_width">116dp</item>
+        <item name="android:layout_height">86dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginEnd">42dp</item>
+        <item name="android:background">@drawable/bg_home_menu_tile</item>
+        <item name="android:gravity">top|start</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>

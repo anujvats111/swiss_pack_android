@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/home_menu_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#303030"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:id="@+id/top_logo_bar"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:background="@drawable/bg_home_top_bar"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitStart"
+                android:src="@drawable/swisspack_logo" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/menu_more"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="5dp"
+                android:src="@drawable/ic_more_vertical" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/HomeSectionTitle"
+            android:text="Friend Connections" />
+
+        <LinearLayout style="@style/HomeMenuRow">
+
+            <TextView
+                android:id="@+id/menu_friends"
+                style="@style/HomeMenuTile"
+                android:text="Friends" />
+
+            <TextView
+                android:id="@+id/menu_groups"
+                style="@style/HomeMenuTile"
+                android:text="Groups" />
+
+        </LinearLayout>
+
+        <TextView
+            style="@style/HomeSectionTitle"
+            android:text="One 2 One Caller" />
+
+        <LinearLayout style="@style/HomeMenuRow">
+
+            <TextView
+                android:id="@+id/menu_chat"
+                style="@style/HomeMenuTile"
+                android:text="Chat" />
+
+            <TextView
+                android:id="@+id/menu_phone"
+                style="@style/HomeMenuTile"
+                android:text="Phone" />
+
+            <TextView
+                android:id="@+id/menu_video_call"
+                style="@style/HomeMenuTile"
+                android:text="Video call" />
+
+        </LinearLayout>
+
+        <TextView
+            style="@style/HomeSectionTitle"
+            android:text="Group Conferencing" />
+
+        <LinearLayout style="@style/HomeMenuRow">
+
+            <TextView
+                android:id="@+id/menu_group_chat"
+                style="@style/HomeMenuTile"
+                android:text="Group Chat" />
+
+            <TextView
+                android:id="@+id/menu_audio_meeting"
+                style="@style/HomeMenuTile"
+                android:text="Audio Meeting" />
+
+            <TextView
+                android:id="@+id/menu_video_meeting"
+                style="@style/HomeMenuTile"
+                android:text="Video Meeting" />
+
+        </LinearLayout>
+
+        <TextView
+            style="@style/HomeSectionTitle"
+            android:text="Social Community" />
+
+        <LinearLayout style="@style/HomeMenuRow">
+
+            <TextView
+                android:id="@+id/menu_billboard"
+                style="@style/HomeMenuTile"
+                android:text="Billboard" />
+
+            <TextView
+                android:id="@+id/menu_broadcast"
+                style="@style/HomeMenuTile"
+                android:text="Broadcast" />
+
+        </LinearLayout>
+
+        <TextView
+            style="@style/HomeSectionTitle"
+            android:text="Utilities" />
+
+        <LinearLayout style="@style/HomeMenuRow">
+
+            <TextView
+                android:id="@+id/menu_ai"
+                style="@style/HomeMenuTile"
+                android:text="Artificial&#10;Intelligence" />
+
+            <TextView
+                android:id="@+id/menu_calendar"
+                style="@style/HomeMenuTile"
+                android:text="Calendar" />
+
+            <TextView
+                android:id="@+id/menu_notes"
+                style="@style/HomeMenuTile"
+                android:text="Notes" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/home_bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_home_bottom_bar"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/bottom_home"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:text="Home"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="|"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/bottom_invite"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:text="Invite"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

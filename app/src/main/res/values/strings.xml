@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
 <!DOCTYPE resources [
-    <!ENTITY appName "Linphone">
+    <!ENTITY appName "SwissPack">
 ]>
 
 <resources>
@@ -1044,6 +1044,8 @@
     <string name="content_description_call_voicemail">Long press to dial voicemail</string>
     <string name="content_description_cancel_files_or_text_pending_sharing">Click to cancel files or text pending sharing</string>
     <string name="content_description_close_drawer_menu">Closes menu</string>
+    <string name="enter_username">Enter username</string>
+    <string name="enter_password">Enter password</string>
 
     <!-- Copy of private hosts_allowlist_sample in androidx.car.app:app:1.7.0-beta01, as they recommend it -->
     <string-array name="hosts_allowlist_sample_copy" translatable="false">
