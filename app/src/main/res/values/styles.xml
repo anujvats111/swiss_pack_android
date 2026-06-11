@@ -313,4 +313,21 @@
         <item name="android:textSize">16sp</item>
     </style>
 
+    <style name="HomeMenuRowHorizontal">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="HomeMenuTileHorizontal">
+        <item name="android:layout_width">115dp</item>
+        <item name="android:layout_height">85dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginEnd">20dp</item>
+        <item name="android:background">@drawable/bg_home_menu_tile</item>
+        <item name="android:gravity">top|start</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>

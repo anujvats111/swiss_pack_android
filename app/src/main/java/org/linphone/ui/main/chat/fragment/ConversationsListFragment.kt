@@ -58,6 +58,11 @@ import org.linphone.utils.RecyclerViewHeaderDecoration
 class ConversationsListFragment : AbstractMainFragment() {
     companion object {
         private const val TAG = "[Conversations List Fragment]"
+        const val ARG_CHAT_LIST_MODE = "chatListMode"
+        const val CHAT_MODE_ALL = 0
+        const val CHAT_MODE_ONE_TO_ONE = 1
+        const val CHAT_MODE_GROUP = 2
+
     }
 
     private lateinit var binding: ChatListFragmentBinding
@@ -67,6 +72,8 @@ class ConversationsListFragment : AbstractMainFragment() {
     private lateinit var adapter: ConversationsListAdapter
 
     private var bottomSheetDialog: BottomSheetDialogFragment? = null
+
+    private var chatListMode: Int = CHAT_MODE_ALL
 
     private val numberOrAddressClickListener = object : ContactNumberOrAddressClickListener {
         @UiThread
@@ -132,6 +139,9 @@ class ConversationsListFragment : AbstractMainFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        chatListMode = arguments?.getInt(ARG_CHAT_LIST_MODE, CHAT_MODE_ALL) ?: CHAT_MODE_ALL
+        Log.i("$TAG Chat list mode received = [$chatListMode]")
 
         listViewModel = ViewModelProvider(this)[ConversationsListViewModel::class.java]
 
@@ -226,17 +236,55 @@ class ConversationsListFragment : AbstractMainFragment() {
                 findNavController().navigate(action)
             }
         }
+//
+//        listViewModel.conversations.observe(viewLifecycleOwner) {
+//            adapter.submitList(it)
+//
+//            // Wait for adapter to have items before setting it in the RecyclerView,
+//            // otherwise scroll position isn't retained
+//            if (binding.conversationsList.adapter != adapter) {
+//                binding.conversationsList.adapter = adapter
+//            }
+//
+//            Log.i("$TAG Conversations list ready with [${it.size}] items")
+//            listViewModel.fetchInProgress.value = false
+//        }
 
-        listViewModel.conversations.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+        listViewModel.conversations.observe(viewLifecycleOwner) { list ->
 
-            // Wait for adapter to have items before setting it in the RecyclerView,
-            // otherwise scroll position isn't retained
+            val filteredList = when (chatListMode) {
+                CHAT_MODE_ONE_TO_ONE -> {
+                    Log.i("$TAG Filtering only one-to-one conversations")
+
+                    list.filter { wrapperModel ->
+                        wrapperModel.conversationModel?.isGroup == false
+                    }
+                }
+
+                CHAT_MODE_GROUP -> {
+                    Log.i("$TAG Filtering only group conversations")
+
+                    list.filter { wrapperModel ->
+                        wrapperModel.conversationModel?.isGroup == true
+                    }
+                }
+
+                else -> {
+                    Log.i("$TAG Showing all conversations")
+                    list
+                }
+            }
+
+            adapter.submitList(filteredList)
+
             if (binding.conversationsList.adapter != adapter) {
                 binding.conversationsList.adapter = adapter
             }
 
-            Log.i("$TAG Conversations list ready with [${it.size}] items")
+            Log.i(
+                "$TAG Conversations list ready with original size [${list.size}] and filtered size [${filteredList.size}]"
+            )
+
             listViewModel.fetchInProgress.value = false
         }
 
@@ -246,6 +294,10 @@ class ConversationsListFragment : AbstractMainFragment() {
                 val action = ConversationFragmentDirections.actionGlobalConversationFragment(conversationId)
                 binding.chatNavContainer.findNavController().navigate(action)
             }
+        }
+
+        binding.setOnBackClicked {
+            findNavController().popBackStack()
         }
 
         sharedViewModel.showConversationEvent.observe(viewLifecycleOwner) {
@@ -346,16 +398,28 @@ class ConversationsListFragment : AbstractMainFragment() {
             }
         }
 
-        // AbstractMainFragment related
-
-        listViewModel.title.value = getString(R.string.bottom_navigation_conversations_label)
+//        listViewModel.title.value = getString(R.string.bottom_navigation_conversations_label)
+        listViewModel.title.value = when (chatListMode) {
+            CHAT_MODE_ONE_TO_ONE -> "Chat"
+            CHAT_MODE_GROUP -> "Group Chat"
+            else -> getString(R.string.bottom_navigation_conversations_label)
+        }
         setViewModel(listViewModel)
-        initViews(
-            binding.slidingPaneLayout,
-            binding.topBar,
-            binding.bottomNavBar,
-            R.id.conversationsListFragment
-        )
+
+//        binding.topBar.root.visibility = View.GONE
+//        binding.bottomNavBar.root.visibility = View.GONE
+
+//        binding.topBar..setImageResource(R.drawable.caret_left)
+//        binding.topBar.menuButton.setOnClickListener {
+//            findNavController().popBackStack()
+//        }
+
+//        initViews(
+//            binding.slidingPaneLayout,
+//            binding.topBar,
+//            binding.bottomNavBar,
+//            R.id.conversationsListFragment
+//        )
 
         // Handle intent params if any
 

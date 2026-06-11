@@ -39,7 +39,6 @@ import androidx.annotation.UiThread
 import androidx.car.app.connection.CarConnection
 import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -82,6 +81,8 @@ class MainActivity : GenericActivity() {
         private const val TAG = "[Main Activity]"
 
         private const val DEFAULT_FRAGMENT_KEY = "default_fragment"
+
+        private const val HOME_FRAGMENT_ID = 0
         private const val CONTACTS_FRAGMENT_ID = 1
         private const val HISTORY_FRAGMENT_ID = 2
         private const val CHAT_FRAGMENT_ID = 3
@@ -138,7 +139,7 @@ class MainActivity : GenericActivity() {
     @SuppressLint("InlinedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         // Must be done before the setContentView
-        installSplashScreen()
+//        installSplashScreen()
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) {
@@ -240,6 +241,10 @@ class MainActivity : GenericActivity() {
                 }
             }
         }
+
+        binding.drawerMenu.setDrawerLockMode(
+            androidx.drawerlayout.widget.DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+        )
 
         viewModel.lastAccountRemovedEvent.observe(this) {
             it.consume {
@@ -433,7 +438,8 @@ class MainActivity : GenericActivity() {
                 MEETINGS_FRAGMENT_ID
             }
             else -> { // Default
-                HISTORY_FRAGMENT_ID
+                HOME_FRAGMENT_ID
+//                HISTORY_FRAGMENT_ID
             }
         }
         getPreferences(MODE_PRIVATE).edit {
@@ -500,7 +506,8 @@ class MainActivity : GenericActivity() {
 
             val defaultFragmentId = getPreferences(MODE_PRIVATE).getInt(
                 DEFAULT_FRAGMENT_KEY,
-                HISTORY_FRAGMENT_ID
+                HOME_FRAGMENT_ID,
+//                HISTORY_FRAGMENT_ID
             )
             Log.i(
                 "$TAG Trying to navigate to set default destination [$defaultFragmentId]"
@@ -512,6 +519,12 @@ class MainActivity : GenericActivity() {
                 val navOptions = navOptionsBuilder.build()
                 val args = bundleOf()
                 when (defaultFragmentId) {
+
+                    HOME_FRAGMENT_ID -> {
+                        Log.i("$TAG Default fragment is HomeMenuFragment")
+                        navigatedToDefaultFragment = true
+                    }
+
                     CONTACTS_FRAGMENT_ID -> {
                         findNavController().addOnDestinationChangedListener(destinationListener)
                         findNavController().navigate(

@@ -1,163 +1,272 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/home_menu_root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#303030"
-    android:fillViewport="true">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <LinearLayout
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="org.linphone.ui.home.viewModel.HomeViewModel" />
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/home_root"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="24dp">
+        android:layout_height="match_parent"
+        android:background="#303030"
+        tools:context=".ui.home.fragment.HomeMenuFragment">
 
-        <LinearLayout
-            android:id="@+id/top_logo_bar"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:background="@drawable/bg_home_top_bar"
-            android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp">
+        <ScrollView
+            android:id="@+id/home_menu_root"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/home_bottom_bar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="150dp"
-                android:layout_height="40dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitStart"
-                android:src="@drawable/swisspack_logo" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="24dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="16dp">
 
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                <!-- Top Logo Bar -->
+                <LinearLayout
+                    android:id="@+id/top_logo_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="@drawable/bg_home_top_bar"
+                    android:backgroundTint="?color_grey_500"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
 
-            <ImageView
-                android:id="@+id/menu_more"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:padding="5dp"
-                android:src="@drawable/ic_more_vertical" />
-        </LinearLayout>
+                    <ImageView
+                        android:id="@+id/logo"
+                        android:layout_width="150dp"
+                        android:layout_height="40dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitStart"
+                        android:src="@drawable/logo" />
 
-        <TextView
-            style="@style/HomeSectionTitle"
-            android:text="Friend Connections" />
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
 
-        <LinearLayout style="@style/HomeMenuRow">
+                    <ImageView
+                        android:id="@+id/menu_more"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:onClick="@{() -> viewModel.openDrawerMenu()}"
+                        android:padding="5dp"
+                        android:src="@drawable/dots_three_vertical"
+                        android:tint="@color/bc_white" />
 
-            <TextView
-                android:id="@+id/menu_friends"
-                style="@style/HomeMenuTile"
-                android:text="Friends" />
+                </LinearLayout>
 
-            <TextView
-                android:id="@+id/menu_groups"
-                style="@style/HomeMenuTile"
-                android:text="Groups" />
+                <!-- Friend Connections -->
+                <TextView
+                    style="@style/HomeSectionTitle"
+                    android:text="Friend Connections" />
 
-        </LinearLayout>
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
 
-        <TextView
-            style="@style/HomeSectionTitle"
-            android:text="One 2 One Caller" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-        <LinearLayout style="@style/HomeMenuRow">
+                        <TextView
+                            android:id="@+id/menu_friends"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToFriends()}"
+                            android:text="Friends" />
 
-            <TextView
-                android:id="@+id/menu_chat"
-                style="@style/HomeMenuTile"
-                android:text="Chat" />
+                        <TextView
+                            android:id="@+id/menu_groups"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToGroups()}"
+                            android:text="Groups" />
 
-            <TextView
-                android:id="@+id/menu_phone"
-                style="@style/HomeMenuTile"
-                android:text="Phone" />
+                    </LinearLayout>
 
-            <TextView
-                android:id="@+id/menu_video_call"
-                style="@style/HomeMenuTile"
-                android:text="Video call" />
+                </HorizontalScrollView>
 
-        </LinearLayout>
+                <!-- One 2 One Caller -->
+                <TextView
+                    style="@style/HomeSectionTitle"
+                    android:text="One 2 One Caller" />
 
-        <TextView
-            style="@style/HomeSectionTitle"
-            android:text="Group Conferencing" />
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
 
-        <LinearLayout style="@style/HomeMenuRow">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/menu_group_chat"
-                style="@style/HomeMenuTile"
-                android:text="Group Chat" />
+                        <TextView
+                            android:id="@+id/menu_chat"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToChat()}"
+                            android:text="Chat" />
 
-            <TextView
-                android:id="@+id/menu_audio_meeting"
-                style="@style/HomeMenuTile"
-                android:text="Audio Meeting" />
+                        <TextView
+                            android:id="@+id/menu_phone"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToPhone()}"
+                            android:text="Phone" />
 
-            <TextView
-                android:id="@+id/menu_video_meeting"
-                style="@style/HomeMenuTile"
-                android:text="Video Meeting" />
+                        <TextView
+                            android:id="@+id/menu_video_call"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToVideoCall()}"
+                            android:text="Video call" />
 
-        </LinearLayout>
+                    </LinearLayout>
 
-        <TextView
-            style="@style/HomeSectionTitle"
-            android:text="Social Community" />
+                </HorizontalScrollView>
 
-        <LinearLayout style="@style/HomeMenuRow">
+                <!-- Group Conferencing -->
+                <TextView
+                    style="@style/HomeSectionTitle"
+                    android:text="Group Conferencing" />
 
-            <TextView
-                android:id="@+id/menu_billboard"
-                style="@style/HomeMenuTile"
-                android:text="Billboard" />
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
 
-            <TextView
-                android:id="@+id/menu_broadcast"
-                style="@style/HomeMenuTile"
-                android:text="Broadcast" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-        </LinearLayout>
+                        <TextView
+                            android:id="@+id/menu_group_chat"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToGroupChat()}"
+                            android:text="Group Chat" />
 
-        <TextView
-            style="@style/HomeSectionTitle"
-            android:text="Utilities" />
+                        <TextView
+                            android:id="@+id/menu_audio_meeting"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToAudioMeeting()}"
+                            android:text="Audio Meeting" />
 
-        <LinearLayout style="@style/HomeMenuRow">
+                        <TextView
+                            android:id="@+id/menu_video_meeting"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToVideoMeeting()}"
+                            android:text="Video Meeting" />
 
-            <TextView
-                android:id="@+id/menu_ai"
-                style="@style/HomeMenuTile"
-                android:text="Artificial&#10;Intelligence" />
+                    </LinearLayout>
 
-            <TextView
-                android:id="@+id/menu_calendar"
-                style="@style/HomeMenuTile"
-                android:text="Calendar" />
+                </HorizontalScrollView>
 
-            <TextView
-                android:id="@+id/menu_notes"
-                style="@style/HomeMenuTile"
-                android:text="Notes" />
+                <!-- Social Community -->
+                <TextView
+                    style="@style/HomeSectionTitle"
+                    android:text="Social Community" />
 
-        </LinearLayout>
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
 
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/menu_billboard"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToBillboard()}"
+                            android:text="Billboard" />
+
+                        <TextView
+                            android:id="@+id/menu_broadcast"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToBroadcast()}"
+                            android:text="Broadcast" />
+
+                    </LinearLayout>
+
+                </HorizontalScrollView>
+
+                <!-- Utilities -->
+                <TextView
+                    style="@style/HomeSectionTitle"
+                    android:text="Utilities" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/menu_ai"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToArtificialIntelligence()}"
+                            android:text="Artificial&#10;Intelligence" />
+
+                        <TextView
+                            android:id="@+id/menu_calendar"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToCalendar()}"
+                            android:text="Calendar" />
+
+                        <TextView
+                            android:id="@+id/menu_notes"
+                            style="@style/HomeMenuTileHorizontal"
+                            android:onClick="@{() -> viewModel.navigateToNotes()}"
+                            android:text="Notes" />
+
+                    </LinearLayout>
+
+                </HorizontalScrollView>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <!-- Locked Bottom Bar -->
         <LinearLayout
             android:id="@+id/home_bottom_bar"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="58dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="16dp"
             android:background="@drawable/bg_home_bottom_bar"
+            android:elevation="8dp"
             android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/bottom_home"
@@ -183,6 +292,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:onClick="@{() -> viewModel.navigateToInvite()}"
                 android:paddingStart="28dp"
                 android:paddingEnd="28dp"
                 android:text="Invite"
@@ -191,6 +301,6 @@
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</ScrollView>
+</layout>
