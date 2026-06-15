@@ -21,6 +21,10 @@ constructor() : ViewModel() {
         MutableLiveData()
     }
 
+    val navigateToMoreEvent: MutableLiveData<Event<Boolean>> by lazy {
+        MutableLiveData()
+    }
+
     val navigateToChatEvent: MutableLiveData<Event<Boolean>> by lazy {
         MutableLiveData()
     }
@@ -82,6 +86,11 @@ constructor() : ViewModel() {
     @UiThread
     fun navigateToGroups() {
         navigateToGroupsEvent.value = Event(true)
+    }
+
+   @UiThread
+    fun navigateToMore() {
+       navigateToMoreEvent.value = Event(true)
     }
 
     @UiThread

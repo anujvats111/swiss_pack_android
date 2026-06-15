@@ -41,6 +41,7 @@ max_calls=10
 history_max_size=100
 conference_layout=1
 hide_empty_chat_rooms=1
+conference_server_uri=sip:conference-factory@system.swisspack.us
 
 [fec]
 fec_enabled=1

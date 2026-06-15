@@ -43,6 +43,7 @@ enable_simple_group_chat_message_state=0
 aggregate_imdn=1
 notify_each_friend_individually_when_presence_received=0
 store_friends=0
+conference_server_uri=sip:conference-factory@system.swisspack.us
 
 [app]
 record_aware=1

@@ -4,19 +4,29 @@
     xmlns:bind="http://schemas.android.com/tools">
 
     <data>
+
         <import type="android.view.View" />
+
         <variable
             name="newMeetingClicked"
             type="View.OnClickListener" />
+
+        <variable
+            name="onBackClicked"
+            type="View.OnClickListener" />
+
         <variable
             name="filterClickListener"
             type="View.OnClickListener" />
+
         <variable
             name="todayClickListener"
             type="View.OnClickListener" />
+
         <variable
             name="viewModel"
             type="org.linphone.ui.main.meetings.viewmodel.MeetingsListViewModel" />
+
     </data>
 
     <androidx.slidingpanelayout.widget.SlidingPaneLayout
@@ -31,45 +41,81 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/color_main1_500">
+                android:background="?attr/color_main2_000">
 
                 <androidx.constraintlayout.widget.Group
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:constraint_referenced_ids="no_meeting_image, no_meeting_label"
-                    android:visibility="@{viewModel.meetings.empty &amp;&amp; !viewModel.isFilterEmpty ? View.VISIBLE : View.GONE, default=gone}" />
+                    android:visibility="@{viewModel.meetings.empty &amp;&amp; !viewModel.isFilterEmpty ? View.VISIBLE : View.GONE, default=gone}"
+                    app:constraint_referenced_ids="no_meeting_image,no_meeting_label" />
 
-                <include
-                    android:id="@+id/top_bar"
-                    layout="@layout/main_activity_top_bar"
-                    bind:viewModel="@{viewModel}"
-                    bind:showExtraAction="@{true}"
-                    bind:extraActionIcon="@{@drawable/calendar}"
-                    bind:extraActionClickListener="@{todayClickListener}"
-                    bind:extraActionContentDescription="@{@string/content_description_meeting_today}"
-                    bind:extraActionEnabled="@{true}"
+                <!-- Custom Top Bar -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/custom_top_bar"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/top_bar_height"
+                    android:background="?attr/color_main2_000"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                <View
-                    android:id="@+id/shadow_effect"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="@dimen/top_bar_shadow_height"
-                    android:background="@drawable/shape_squircle_white_r20_top_shadow"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    <ImageView
+                        android:id="@+id/back_button"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:padding="9dp"
+                        android:onClick="@{onBackClicked}"
+                        android:src="@drawable/caret_left"
+                        android:contentDescription="@string/content_description_go_back_icon"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:tint="?attr/color_text" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/custom_title"
+                        style="@style/default_text_style_700"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@{viewModel.title}"
+                        android:textColor="?attr/color_text"
+                        android:textSize="20sp"
+                        app:layout_constraintStart_toEndOf="@id/back_button"
+                        app:layout_constraintEnd_toStartOf="@id/today_button"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/today_button"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:padding="9dp"
+                        android:onClick="@{todayClickListener}"
+                        android:src="@drawable/calendar"
+                        android:contentDescription="@string/content_description_meeting_today"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:tint="?attr/color_text"
+                        android:visibility="gone"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/meetings_list"
                     android:layout_width="match_parent"
-                    android:background="@drawable/shape_squircle_white_r20_top_background"
                     android:layout_height="0dp"
                     android:layout_marginTop="@dimen/top_bar_height"
+                    android:background="@drawable/shape_squircle_white_r20_top_background_2"
+                    android:backgroundTint="?attr/color_main2_000"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/bottom_nav_bar" />
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
                 <ImageView
                     android:id="@+id/no_meeting_image"
@@ -87,8 +133,8 @@
                     app:layout_constraintBottom_toTopOf="@id/no_meeting_label" />
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    style="@style/section_header_style"
                     android:id="@+id/no_meeting_label"
+                    style="@style/section_header_style"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@string/list_filter_no_result_found"
@@ -96,7 +142,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/no_meeting_image"
-                    app:layout_constraintBottom_toBottomOf="@id/meetings_list"/>
+                    app:layout_constraintBottom_toBottomOf="@id/meetings_list" />
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/fetch_in_progress"
@@ -108,30 +154,23 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/bottom_nav_bar" />
-
-                <include
-                    android:id="@+id/bottom_nav_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    layout="@layout/bottom_nav_bar"
-                    bind:viewModel="@{viewModel}"
                     app:layout_constraintBottom_toBottomOf="parent" />
 
+                <!-- Bottom Right FAB -->
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/new_meeting"
                     android:onClick="@{newMeetingClicked}"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end|bottom"
-                    android:layout_margin="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
                     android:src="@drawable/video_conference_plus"
                     android:contentDescription="@string/content_description_schedule_meeting"
                     app:tint="?attr/color_on_main"
                     app:backgroundTint="?attr/color_main1_500"
                     app:shapeAppearanceOverlay="@style/rounded"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/bottom_nav_bar" />
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -148,7 +187,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             app:defaultNavHost="false"
-            app:navGraph="@navigation/meetings_nav_graph"/>
+            app:navGraph="@navigation/meetings_nav_graph" />
 
     </androidx.slidingpanelayout.widget.SlidingPaneLayout>
 

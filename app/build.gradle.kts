@@ -14,7 +14,7 @@ plugins {
     alias(libs.plugins.navigation)
 }
 
-val packageName = "org.linphone"
+val packageName = "org.swiss"
 val useDifferentPackageNameForDebugBuild = false
 
 val sdkPath = providers.gradleProperty("LinphoneSdkBuildDir").get()

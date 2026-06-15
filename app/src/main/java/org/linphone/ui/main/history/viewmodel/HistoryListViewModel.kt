@@ -36,6 +36,9 @@ import org.linphone.core.MagicSearchListenerStub
 import org.linphone.core.SearchResult
 import org.linphone.core.tools.Log
 import org.linphone.ui.main.contacts.model.ContactAvatarModel
+import org.linphone.ui.main.history.fragment.HistoryListFragment.Companion.HISTORY_MODE_ALL
+import org.linphone.ui.main.history.fragment.HistoryListFragment.Companion.HISTORY_MODE_AUDIO
+import org.linphone.ui.main.history.fragment.HistoryListFragment.Companion.HISTORY_MODE_VIDEO
 import org.linphone.ui.main.history.model.CallLogModel
 import org.linphone.ui.main.history.model.CallLogModelWrapper
 import org.linphone.ui.main.model.ConversationContactOrSuggestionModel
@@ -55,6 +58,8 @@ class HistoryListViewModel
     val callLogs = MutableLiveData<ArrayList<CallLogModelWrapper>>()
 
     val fetchInProgress = MutableLiveData<Boolean>()
+
+    private var historyListMode: Int = HISTORY_MODE_ALL
 
     val historyInsertedEvent: MutableLiveData<Event<Boolean>> by lazy {
         MutableLiveData()
@@ -156,6 +161,12 @@ class HistoryListViewModel
         }
     }
 
+    @UiThread
+    fun updateHistoryListMode(mode: Int) {
+        historyListMode = mode
+        filter()
+    }
+
     @WorkerThread
     private fun computeCallLogsList(filter: String) {
         if (coreContext.core.globalState != GlobalState.On) {
@@ -188,9 +199,20 @@ class HistoryListViewModel
             coreContext.core.callLogs
         }
 
+//        for (callLog in logs) {
+//            val model = CallLogModel(callLog)
+//            if (isCallLogMatchingFilter(model, filter)) {
+//                list.add(CallLogModelWrapper(model))
+//            }
+//        }
+
         for (callLog in logs) {
             val model = CallLogModel(callLog)
-            if (isCallLogMatchingFilter(model, filter)) {
+
+            if (
+                isCallLogMatchingFilter(model, filter) &&
+                isCallLogMatchingMode(model)
+            ) {
                 list.add(CallLogModelWrapper(model))
             }
         }
@@ -211,6 +233,15 @@ class HistoryListViewModel
 
         val friendName = model.avatarModel.friend.name ?: LinphoneUtils.getDisplayName(model.address)
         return friendName.contains(filter, ignoreCase = true) || model.address.asStringUriOnly().contains(filter, ignoreCase = true)
+    }
+
+    @WorkerThread
+    private fun isCallLogMatchingMode(model: CallLogModel): Boolean {
+        return when (historyListMode) {
+            HISTORY_MODE_AUDIO -> !model.isVideoCall
+            HISTORY_MODE_VIDEO -> model.isVideoCall
+            else -> true
+        }
     }
 
     @WorkerThread

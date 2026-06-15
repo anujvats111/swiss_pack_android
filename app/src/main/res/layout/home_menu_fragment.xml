@@ -68,10 +68,11 @@
                         android:id="@+id/menu_more"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:onClick="@{() -> viewModel.openDrawerMenu()}"
+                        android:onClick="@{() -> viewModel.navigateToMore()}"
                         android:padding="5dp"
                         android:src="@drawable/dots_three_vertical"
-                        android:tint="@color/bc_white" />
+                        android:tint="@color/bc_white"
+                        tools:ignore="UseAppTint" />
 
                 </LinearLayout>
 

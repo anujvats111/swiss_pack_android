@@ -3,19 +3,6 @@
  *
  * This file is part of linphone-android
  * (see https://www.linphone.org).
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.linphone.ui.main.chat.fragment
 
@@ -26,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.UiThread
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
@@ -58,11 +46,11 @@ import org.linphone.utils.RecyclerViewHeaderDecoration
 class ConversationsListFragment : AbstractMainFragment() {
     companion object {
         private const val TAG = "[Conversations List Fragment]"
+
         const val ARG_CHAT_LIST_MODE = "chatListMode"
         const val CHAT_MODE_ALL = 0
         const val CHAT_MODE_ONE_TO_ONE = 1
         const val CHAT_MODE_GROUP = 2
-
     }
 
     private lateinit var binding: ChatListFragmentBinding
@@ -116,9 +104,9 @@ class ConversationsListFragment : AbstractMainFragment() {
             findNavController().currentDestination?.id == R.id.startConversationFragment ||
             findNavController().currentDestination?.id == R.id.meetingWaitingRoomFragment
         ) {
-            // Holds fragment in place while new fragment slides over it
             return AnimationUtils.loadAnimation(activity, R.anim.hold)
         }
+
         return super.onCreateAnimation(transit, enter, nextAnim)
     }
 
@@ -164,36 +152,44 @@ class ConversationsListFragment : AbstractMainFragment() {
                     model.isGroup,
                     model.isReadOnly.value == true,
                     (model.unreadMessageCount.value ?: 0) > 0,
-                    { // onDismiss
+                    {
                         adapter.resetSelection()
                     },
-                    { // onMarkConversationAsRead
+                    {
                         Log.i("$TAG Marking conversation [${model.id}] as read")
                         model.markAsRead()
                     },
-                    { // onToggleMute
+                    {
                         Log.i("$TAG Changing mute status of conversation [${model.id}]")
                         model.toggleMute()
                     },
-                    { // onCall
+                    {
                         Log.i("$TAG Calling conversation [${model.id}]")
                         model.call()
                     },
-                    { // onDeleteConversation
+                    {
                         showDeleteConfirmationDialog(model)
                     },
-                    { // onLeaveGroup
+                    {
                         showLeaveConfirmationDialog(model)
                     }
                 )
+
                 modalBottomSheet.show(parentFragmentManager, ConversationDialogFragment.TAG)
                 bottomSheetDialog = modalBottomSheet
             }
         }
 
+        /*
+         * Important:
+         * Old working flow is kept.
+         * Item click only sets selected chat room and triggers shared event.
+         * Actual navigation happens inside sharedViewModel.showConversationEvent observer.
+         */
         adapter.conversationClickedEvent.observe(viewLifecycleOwner) {
             it.consume { model ->
-                Log.i("$TAG Show conversation with ID [${model.id}]")
+                Log.i("$TAG Chat item clicked with ID [${model.id}]")
+
                 sharedViewModel.displayedChatRoom = model.chatRoom
                 sharedViewModel.showConversationEvent.value = Event(model.id)
             }
@@ -202,17 +198,22 @@ class ConversationsListFragment : AbstractMainFragment() {
         adapter.createConversationWithFriendClickedEvent.observe(viewLifecycleOwner) {
             it.consume { friend ->
                 coreContext.postOnCoreThread {
-                    val singleAvailableAddress = LinphoneUtils.getSingleAvailableAddressForFriend(friend)
+                    val singleAvailableAddress =
+                        LinphoneUtils.getSingleAvailableAddressForFriend(friend)
+
                     if (singleAvailableAddress != null) {
                         Log.i(
                             "$TAG Only 1 SIP address or phone number found for contact [${friend.name}], using it"
                         )
                         listViewModel.createOneToOneChatRoomWith(singleAvailableAddress)
                     } else {
-                        val list = friend.getListOfSipAddressesAndPhoneNumbers(numberOrAddressClickListener)
+                        val list =
+                            friend.getListOfSipAddressesAndPhoneNumbers(numberOrAddressClickListener)
+
                         Log.i(
                             "$TAG [${list.size}] numbers or addresses found for contact [${friend.name}], showing selection dialog"
                         )
+
                         coreContext.postOnMainThread {
                             showNumbersOrAddressesDialog(list)
                         }
@@ -231,27 +232,16 @@ class ConversationsListFragment : AbstractMainFragment() {
         binding.setOnNewConversationClicked {
             if (findNavController().currentDestination?.id == R.id.conversationsListFragment) {
                 Log.i("$TAG Navigating to start conversation fragment")
+
                 val action =
-                    ConversationsListFragmentDirections.actionConversationsListFragmentToStartConversationFragment()
+                    ConversationsListFragmentDirections
+                        .actionConversationsListFragmentToStartConversationFragment()
+
                 findNavController().navigate(action)
             }
         }
-//
-//        listViewModel.conversations.observe(viewLifecycleOwner) {
-//            adapter.submitList(it)
-//
-//            // Wait for adapter to have items before setting it in the RecyclerView,
-//            // otherwise scroll position isn't retained
-//            if (binding.conversationsList.adapter != adapter) {
-//                binding.conversationsList.adapter = adapter
-//            }
-//
-//            Log.i("$TAG Conversations list ready with [${it.size}] items")
-//            listViewModel.fetchInProgress.value = false
-//        }
 
         listViewModel.conversations.observe(viewLifecycleOwner) { list ->
-
             val filteredList = when (chatListMode) {
                 CHAT_MODE_ONE_TO_ONE -> {
                     Log.i("$TAG Filtering only one-to-one conversations")
@@ -288,23 +278,31 @@ class ConversationsListFragment : AbstractMainFragment() {
             listViewModel.fetchInProgress.value = false
         }
 
+        /*
+         * Important:
+         * ConversationFragment is inside chat_nav_container child NavHost.
+         * So use binding.chatNavContainer.findNavController(), not parent findNavController().
+         * After navigate, open SlidingPaneLayout manually because initViews() is not used in custom layout.
+         */
         listViewModel.chatRoomCreatedEvent.observe(viewLifecycleOwner) {
             it.consume { conversationId ->
                 Log.i("$TAG Conversation [$conversationId] has been created, navigating to it")
-                val action = ConversationFragmentDirections.actionGlobalConversationFragment(conversationId)
-                binding.chatNavContainer.findNavController().navigate(action)
+                openConversation(conversationId)
             }
         }
 
         binding.setOnBackClicked {
-            findNavController().popBackStack()
+            if (binding.slidingPaneLayout.isOpen) {
+                binding.slidingPaneLayout.closePane()
+            } else {
+                findNavController().popBackStack()
+            }
         }
 
         sharedViewModel.showConversationEvent.observe(viewLifecycleOwner) {
             it.consume { conversationId ->
-                Log.i("$TAG Navigating to conversation fragment with ID [$conversationId]")
-                val action = ConversationFragmentDirections.actionGlobalConversationFragment(conversationId)
-                binding.chatNavContainer.findNavController().navigate(action)
+                Log.i("$TAG Navigating to ConversationFragment with ID [$conversationId]")
+                openConversation(conversationId)
             }
         }
 
@@ -312,13 +310,16 @@ class ConversationsListFragment : AbstractMainFragment() {
             it.consume { uri ->
                 if (findNavController().currentDestination?.id == R.id.conversationsListFragment) {
                     Log.i("$TAG Navigating to meeting waiting room fragment with URI [$uri]")
+
                     val action =
-                        ConversationsListFragmentDirections.actionConversationsListFragmentToMeetingWaitingRoomFragment(
-                            uri
-                        )
+                        ConversationsListFragmentDirections
+                            .actionConversationsListFragmentToMeetingWaitingRoomFragment(uri)
+
                     findNavController().navigate(action)
                 } else {
-                    Log.e("$TAG Failed to navigate to meeting waiting room, wrong current destination (expected conversationsListFragment but was something else)")
+                    Log.e(
+                        "$TAG Failed to navigate to meeting waiting room, wrong current destination"
+                    )
                 }
             }
         }
@@ -326,11 +327,18 @@ class ConversationsListFragment : AbstractMainFragment() {
         sharedViewModel.goToAccountProfileEvent.observe(viewLifecycleOwner) {
             it.consume {
                 if (findNavController().currentDestination?.id == R.id.conversationsListFragment) {
-                    val identity = LinphoneUtils.getDefaultAccount()?.params?.identityAddress?.asStringUriOnly().orEmpty()
+                    val identity =
+                        LinphoneUtils
+                            .getDefaultAccount()
+                            ?.params
+                            ?.identityAddress
+                            ?.asStringUriOnly()
+                            .orEmpty()
+
                     val action =
-                        ConversationsListFragmentDirections.actionConversationsListFragmentToAccountProfileFragment(
-                            identity
-                        )
+                        ConversationsListFragmentDirections
+                            .actionConversationsListFragmentToAccountProfileFragment(identity)
+
                     findNavController().navigate(action)
                 }
             }
@@ -341,14 +349,16 @@ class ConversationsListFragment : AbstractMainFragment() {
                 if (findNavController().currentDestination?.id == R.id.conversationsListFragment) {
                     val path = bundle.getString("path", "")
                     val isMedia = bundle.getBoolean("isMedia", false)
+
                     if (path.isEmpty()) {
                         Log.e("$TAG Can't navigate to file viewer for empty path!")
                         return@consume
                     }
 
                     Log.i(
-                        "$TAG Navigating to [${if (isMedia) "media" else "file"}] viewer fragment with path [$path]"
+                        "$TAG Navigating to [${if (isMedia) "media" else "file"}] viewer with path [$path]"
                     )
+
                     if (isMedia) {
                         val intent = Intent(requireActivity(), MediaViewerActivity::class.java)
                         intent.putExtras(bundle)
@@ -367,6 +377,7 @@ class ConversationsListFragment : AbstractMainFragment() {
                 val model = listViewModel.conversations.value.orEmpty().find { wrapperModel ->
                     wrapperModel.conversationModel?.id == conversationId
                 }
+
                 model?.conversationModel?.updateLastMessageInfo()
             }
         }
@@ -374,10 +385,12 @@ class ConversationsListFragment : AbstractMainFragment() {
         sharedViewModel.forceRefreshDisplayedConversationEvent.observe(viewLifecycleOwner) {
             it.consume {
                 val displayChatRoom = sharedViewModel.displayedChatRoom
+
                 if (displayChatRoom != null) {
                     val found = listViewModel.conversations.value.orEmpty().find { wrapperModel ->
                         wrapperModel.conversationModel?.chatRoom == displayChatRoom
                     }
+
                     found?.conversationModel?.updateMuteState()
                 }
             }
@@ -388,49 +401,87 @@ class ConversationsListFragment : AbstractMainFragment() {
         ) {
             it.consume {
                 val displayChatRoom = sharedViewModel.displayedChatRoom
+
                 if (displayChatRoom != null) {
                     val found = listViewModel.conversations.value.orEmpty().find { model ->
                         model.conversationModel?.chatRoom == displayChatRoom
                     }
+
                     found?.conversationModel?.updateUnreadCount()
                 }
+
                 listViewModel.updateUnreadMessagesCount()
             }
         }
 
-//        listViewModel.title.value = getString(R.string.bottom_navigation_conversations_label)
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (binding.slidingPaneLayout.isOpen) {
+                        binding.slidingPaneLayout.closePane()
+                    } else {
+                        findNavController().popBackStack()
+                    }
+                }
+            }
+        )
+
         listViewModel.title.value = when (chatListMode) {
             CHAT_MODE_ONE_TO_ONE -> "Chat"
             CHAT_MODE_GROUP -> "Group Chat"
             else -> getString(R.string.bottom_navigation_conversations_label)
         }
+
         setViewModel(listViewModel)
 
-//        binding.topBar.root.visibility = View.GONE
-//        binding.bottomNavBar.root.visibility = View.GONE
-
-//        binding.topBar..setImageResource(R.drawable.caret_left)
-//        binding.topBar.menuButton.setOnClickListener {
-//            findNavController().popBackStack()
-//        }
-
-//        initViews(
-//            binding.slidingPaneLayout,
-//            binding.topBar,
-//            binding.bottomNavBar,
-//            R.id.conversationsListFragment
-//        )
-
-        // Handle intent params if any
+        /*
+         * Do not call initViews() here because your custom XML does not use default topBar/bottomNavBar.
+         *
+         * Old code used:
+         * initViews(binding.slidingPaneLayout, binding.topBar, binding.bottomNavBar, R.id.conversationsListFragment)
+         *
+         * Now we manually open sliding pane inside openConversation().
+         */
 
         val args = arguments
         if (args != null) {
             val conversationId = args.getString(ARGUMENTS_CONVERSATION_ID)
+
             if (!conversationId.isNullOrEmpty()) {
                 Log.i("$TAG Found conversation ID [$conversationId] in arguments")
+
                 sharedViewModel.showConversationEvent.value = Event(conversationId)
                 args.clear()
             }
+        }
+    }
+
+    /*
+     * This is the most important fix.
+     * It opens ConversationFragment inside chat_nav_container and then opens the right pane.
+     */
+    private fun openConversation(conversationId: String) {
+        try {
+            val action =
+                ConversationFragmentDirections.actionGlobalConversationFragment(conversationId)
+
+            val chatNavController = binding.chatNavContainer.findNavController()
+
+            Log.i(
+                "$TAG Opening ConversationFragment using chatNavContainer NavController, conversationId=[$conversationId]"
+            )
+
+            chatNavController.navigate(action)
+
+            if (!binding.slidingPaneLayout.isOpen) {
+                Log.i("$TAG Opening sliding pane to show conversation messages")
+                binding.slidingPaneLayout.openPane()
+            }
+        } catch (e: IllegalArgumentException) {
+            Log.e("$TAG Failed to open ConversationFragment: $e")
+        } catch (e: IllegalStateException) {
+            Log.e("$TAG Failed to open sliding pane / chat nav controller: $e")
         }
     }
 
@@ -447,7 +498,7 @@ class ConversationsListFragment : AbstractMainFragment() {
         try {
             adapter.registerAdapterDataObserver(dataObserver)
         } catch (e: IllegalStateException) {
-            Log.e("$TAG Failed to unregister data observer to adapter: $e")
+            Log.e("$TAG Failed to register data observer to adapter: $e")
         }
 
         if (shouldRefreshDataInOnResume()) {
@@ -471,6 +522,7 @@ class ConversationsListFragment : AbstractMainFragment() {
 
     private fun showNumbersOrAddressesDialog(list: List<ContactNumberOrAddressModel>) {
         val numberOrAddressModel = NumberOrAddressPickerDialogModel(list)
+
         val dialog =
             DialogUtils.getNumberOrAddressPickerDialog(
                 requireActivity(),
@@ -488,10 +540,12 @@ class ConversationsListFragment : AbstractMainFragment() {
 
     private fun showDeleteConfirmationDialog(conversationModel: ConversationModel) {
         val dialogModel = ConfirmationDialogModel()
-        val dialog = DialogUtils.getDeleteConversationConfirmationDialog(
-            requireActivity(),
-            dialogModel
-        )
+
+        val dialog =
+            DialogUtils.getDeleteConversationConfirmationDialog(
+                requireActivity(),
+                dialogModel
+            )
 
         dialogModel.dismissEvent.observe(viewLifecycleOwner) {
             it.consume {
@@ -512,10 +566,12 @@ class ConversationsListFragment : AbstractMainFragment() {
 
     private fun showLeaveConfirmationDialog(conversationModel: ConversationModel) {
         val dialogModel = ConfirmationDialogModel()
-        val dialog = DialogUtils.getLeaveConversationConfirmationDialog(
-            requireActivity(),
-            dialogModel
-        )
+
+        val dialog =
+            DialogUtils.getLeaveConversationConfirmationDialog(
+                requireActivity(),
+                dialogModel
+            )
 
         dialogModel.dismissEvent.observe(viewLifecycleOwner) {
             it.consume {
@@ -525,7 +581,6 @@ class ConversationsListFragment : AbstractMainFragment() {
 
         dialogModel.confirmEvent.observe(viewLifecycleOwner) {
             it.consume {
-
                 Log.i("$TAG Leaving group conversation [${conversationModel.id}]")
                 conversationModel.leaveGroup()
                 dialog.dismiss()

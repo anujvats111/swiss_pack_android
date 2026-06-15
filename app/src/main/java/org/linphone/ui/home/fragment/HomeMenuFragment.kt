@@ -1,5 +1,6 @@
 package org.linphone.ui.home.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -11,8 +12,8 @@ import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.HomeMenuFragmentBinding
 import org.linphone.ui.home.viewModel.HomeViewModel
-import org.linphone.ui.main.MainActivity
 import org.linphone.ui.main.chat.fragment.ConversationsListFragment
+import org.linphone.ui.main.history.fragment.HistoryListFragment
 
 class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
 
@@ -38,9 +39,16 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
     }
 
     private fun observeViewModel() {
-        viewModel.openDrawerMenuEvent.observe(viewLifecycleOwner) {
+//        viewModel.openDrawerMenuEvent.observe(viewLifecycleOwner) {
+//            it.consume {
+//                (requireActivity() as MainActivity).toggleDrawerMenu()
+//            }
+//        }
+
+        viewModel.navigateToMoreEvent.observe(viewLifecycleOwner) {
             it.consume {
-                (requireActivity() as MainActivity).toggleDrawerMenu()
+                Log.i("$TAG Opening Groups")
+                findNavController().navigate(R.id.action_homeMenuFragment_to_moreFragment)
             }
         }
 
@@ -81,14 +89,36 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
         viewModel.navigateToPhoneEvent.observe(viewLifecycleOwner) {
             it.consume {
                 Log.i("$TAG Opening Phone")
-                findNavController().navigate(R.id.action_homeMenuFragment_to_historyListFragment)
+
+                val bundle = Bundle().apply {
+                    putInt(
+                        HistoryListFragment.ARG_HISTORY_LIST_MODE,
+                        HistoryListFragment.HISTORY_MODE_AUDIO
+                    )
+                }
+
+                findNavController().navigate(
+                    R.id.action_homeMenuFragment_to_historyListFragment,
+                    bundle
+                )
             }
         }
 
         viewModel.navigateToVideoCallEvent.observe(viewLifecycleOwner) {
             it.consume {
                 Log.i("$TAG Opening Video Call")
-                findNavController().navigate(R.id.action_homeMenuFragment_to_historyListFragment)
+
+                val bundle = Bundle().apply {
+                    putInt(
+                        HistoryListFragment.ARG_HISTORY_LIST_MODE,
+                        HistoryListFragment.HISTORY_MODE_VIDEO
+                    )
+                }
+
+                findNavController().navigate(
+                    R.id.action_homeMenuFragment_to_historyListFragment,
+                    bundle
+                )
             }
         }
 
@@ -142,7 +172,7 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
         viewModel.navigateToArtificialIntelligenceEvent.observe(viewLifecycleOwner) {
             it.consume {
                 Log.i("$TAG Opening Artificial Intelligence")
-                Toast.makeText(requireContext(), "AI will come soon", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Artificial Intelligence will come soon", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -163,7 +193,40 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
         viewModel.navigateToInviteEvent.observe(viewLifecycleOwner) {
             it.consume {
                 Log.i("$TAG Opening Invite")
-                Toast.makeText(requireContext(), "Invite will come soon", Toast.LENGTH_SHORT).show()
+
+                val inviteMessage = """
+            Join me on Swisspack for quick and easy conferencing and communication!
+
+            Download now:
+
+            Android:
+            https://play.google.com/store/apps/details?id=com.swisspack
+
+            Apple:
+            https://apps.apple.com/
+        """.trimIndent()
+
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "Join me on Swisspack")
+                    putExtra(Intent.EXTRA_TEXT, inviteMessage)
+                }
+
+                try {
+                    startActivity(
+                        Intent.createChooser(
+                            shareIntent,
+                            "Invite via"
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.e("$TAG Failed to open invite share sheet: $e")
+                    Toast.makeText(
+                        requireContext(),
+                        "No app found to share invite",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }

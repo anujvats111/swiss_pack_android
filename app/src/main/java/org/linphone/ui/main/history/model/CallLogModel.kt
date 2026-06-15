@@ -53,6 +53,8 @@ class CallLogModel
 
     val wasConference: Boolean
 
+    val isVideoCall: Boolean
+
     @IntegerRes
     val iconResId: Int
 
@@ -72,6 +74,14 @@ class CallLogModel
         }
         val time = TimestampUtils.timeToString(timestamp)
         dateTime = "$date | $time"
+
+        isVideoCall = try {
+            callLog.isVideoEnabled
+        } catch (e: Exception) {
+            Log.e("$TAG Failed to check video call log video state: $e")
+            false
+        }
+        Log.w("$TAG isVideoCall " + isVideoCall)
 
         wasConference = callLog.wasConference()
         if (wasConference) {

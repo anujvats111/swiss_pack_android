@@ -67,7 +67,7 @@
             android:value="1"/>-->
 
         <activity
-            android:name=".ui.more.SplashActivity"
+            android:name=".ui.more.view.SplashActivity"
             android:theme="@style/Theme.CallnFaxSplash"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">

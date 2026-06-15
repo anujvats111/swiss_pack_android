@@ -305,6 +305,26 @@ open class AccountLoginViewModel
                 accountParams.setRoutesAddresses(arrayOf(outboundProxyAddress))
             }
 
+            val conferenceUri = "sip:conference-factory@system.swisspack.us"
+            if (conferenceUri.isNotEmpty()) {
+                val conferenceFactoryAddress = core.interpretUrl(conferenceUri, false)
+                accountParams.conferenceFactoryAddress = conferenceFactoryAddress
+            } else {
+                accountParams.conferenceFactoryAddress = null
+            }
+
+            val audioVideoConferenceUri = "sip:conference-factory@system.swisspack.us"
+            if (audioVideoConferenceUri.isNotEmpty()) {
+                val audioVideoConferenceFactoryAddress = core.interpretUrl(
+                    audioVideoConferenceUri,
+                    false
+                )
+                accountParams.audioVideoConferenceFactoryAddress =
+                    audioVideoConferenceFactoryAddress
+            } else {
+                accountParams.audioVideoConferenceFactoryAddress = null
+            }
+
             val prefix = internationalPrefix.value.orEmpty().trim()
             val isoCountryCode = internationalPrefixIsoCountryCode.value.orEmpty()
             if (prefix.isNotEmpty()) {
