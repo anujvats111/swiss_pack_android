@@ -7,16 +7,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
+import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import org.linphone.LinphoneApplication.Companion.coreContext
+import org.linphone.R
 import org.linphone.core.tools.Log
 import org.linphone.databinding.MoreFragmentBinding
 import org.linphone.ui.main.fragment.AbstractMainFragment
 import org.linphone.ui.main.more.viewmodel.MoreViewModel
 import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_ABOUT
 import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_HELP
-import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_LOGOUT
+// import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_LOGOUT
 import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_PRIVACY
 import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_PROFILE
 import org.linphone.ui.main.more.viewmodel.MoreViewModel.Companion.OPTION_SETTINGS
@@ -106,33 +110,71 @@ class MoreFragment : AbstractMainFragment() {
         when (optionId) {
             OPTION_PROFILE -> {
                 Log.i("$TAG Profile clicked")
-                // findNavController().navigate(R.id.action_moreFragment_to_accountProfileFragment)
+
+                val account = coreContext.core.defaultAccount
+                val identity = account?.params?.identityAddress?.asStringUriOnly().orEmpty()
+
+                if (identity.isNotEmpty()) {
+                    val args = bundleOf(
+                        "accountIdentity" to identity
+                    )
+
+                    val navOptions = NavOptions.Builder()
+                        .setLaunchSingleTop(true)
+                        .setEnterAnim(R.anim.slide_in_right)
+                        .setExitAnim(R.anim.slide_out_left)
+                        .setPopEnterAnim(R.anim.slide_in_left)
+                        .setPopExitAnim(R.anim.slide_out_right)
+                        .build()
+
+                    findNavController().navigate(
+                        R.id.action_global_accountProfileFragment,
+                        args,
+                        navOptions
+                    )
+                } else {
+                    Log.e("$TAG No default account identity found")
+                }
+
             }
 
             OPTION_SETTINGS -> {
                 Log.i("$TAG Settings clicked")
-                // findNavController().navigate(R.id.action_moreFragment_to_settingsFragment)
+
+                val navOptions = NavOptions.Builder()
+                    .setLaunchSingleTop(true)
+                    .setEnterAnim(R.anim.slide_in_right)
+                    .setExitAnim(R.anim.slide_out_left)
+                    .setPopEnterAnim(R.anim.slide_in_left)
+                    .setPopExitAnim(R.anim.slide_out_right)
+                    .build()
+
+                findNavController().navigate(
+                    R.id.action_global_settingsFragment,
+                    null,
+                    navOptions
+                )
             }
 
             OPTION_PRIVACY -> {
                 Log.i("$TAG Privacy clicked")
-                openUrl("https://www.swisspack.com/privacy-policy")
+                openUrl("https://system.swisspack.us/privacy-policy")
             }
 
             OPTION_HELP -> {
                 Log.i("$TAG Help clicked")
-                // findNavController().navigate(R.id.action_moreFragment_to_helpFragment)
+                openUrl("https://system.swisspack.us/help-support")
             }
 
             OPTION_ABOUT -> {
                 Log.i("$TAG About clicked")
-                // findNavController().navigate(R.id.action_moreFragment_to_aboutFragment)
+                openUrl("https://system.swisspack.us/about")
             }
 
-            OPTION_LOGOUT -> {
-                Log.i("$TAG Logout clicked")
-                // Add your logout logic here
-            }
+//            OPTION_LOGOUT -> {
+//                Log.i("$TAG Logout clicked")
+//
+//            }
         }
     }
 

@@ -62,7 +62,12 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
         viewModel.navigateToGroupsEvent.observe(viewLifecycleOwner) {
             it.consume {
                 Log.i("$TAG Opening Groups")
-                findNavController().navigate(R.id.action_homeMenuFragment_to_contactsListFragment)
+                findNavController().navigate(
+                    R.id.action_homeMenuFragment_to_conversationsListFragment,
+                    bundleOf(
+                        ConversationsListFragment.ARG_CHAT_LIST_MODE to ConversationsListFragment.CHAT_MODE_GROUP
+                    )
+                )
             }
         }
 

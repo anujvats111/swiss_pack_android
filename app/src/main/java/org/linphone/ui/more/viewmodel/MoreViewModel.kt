@@ -13,7 +13,7 @@ class MoreViewModel : AbstractMainViewModel() {
         const val OPTION_PRIVACY = 3
         const val OPTION_HELP = 4
         const val OPTION_ABOUT = 5
-        const val OPTION_LOGOUT = 6
+    //        const val OPTION_LOGOUT = 6
     }
 
     val options = MutableLiveData<List<MoreOptionModel>>()
@@ -51,11 +51,16 @@ class MoreViewModel : AbstractMainViewModel() {
                 "About",
                 R.drawable.info
             ),
-            MoreOptionModel(
-                OPTION_LOGOUT,
-                "Logout",
-                R.drawable.sign_out
-            )
+//            MoreOptionModel(
+//                OPTION_VERSION,
+//                "Version",
+//                R.drawable.version
+//            ),
+//            MoreOptionModel(
+//                OPTION_LOGOUT,
+//                "Logout",
+//                R.drawable.sign_out
+//            )
         )
     }
 

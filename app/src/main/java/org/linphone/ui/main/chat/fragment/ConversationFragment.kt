@@ -428,8 +428,8 @@ open class ConversationFragment : SlidingPaneChildFragment() {
 
         if (findNavController().currentDestination?.id == R.id.conversationFragment) {
             // If not done this fragment won't be paused, which will cause us issues
-            val action =
-                ConversationFragmentDirections.actionConversationFragmentToEmptyFragment()
+//            Toast.makeText(requireContext(), "Back pressed", Toast.LENGTH_SHORT).show()
+            val action = ConversationFragmentDirections.actionConversationFragmentToEmptyFragment()
             findNavController().navigate(action)
             return true
         }

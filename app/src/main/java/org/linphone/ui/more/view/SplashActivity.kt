@@ -17,15 +17,21 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            val mainIntent = Intent(this, MainActivity::class.java).apply {
-                action = intent?.action
-                data = intent?.data
-                type = intent?.type
-                putExtras(intent ?: Intent())
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(mainIntent)
+//            val mainIntent = Intent(this, MainActivity::class.java).apply {
+//                action = intent?.action
+//                data = intent?.data
+//                type = intent?.type
+//                putExtras(intent ?: Intent())
+//                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+//            }
+//            startActivity(mainIntent)
+//            finish()
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra(MainActivity.EXTRA_OPEN_HOME, true)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
+
         }, 3000)
     }
 }

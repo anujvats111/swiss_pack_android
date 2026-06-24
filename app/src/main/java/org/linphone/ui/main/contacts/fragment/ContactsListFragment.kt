@@ -32,6 +32,7 @@ import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.PopupWindow
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.UiThread
 import androidx.core.content.ContextCompat
@@ -93,18 +94,19 @@ class ContactsListFragment : AbstractMainFragment() {
     }
 
     override fun onDefaultAccountChanged() {
-        Log.i(
-            "$TAG Default account changed, updating avatar in top bar & refreshing contacts list"
+        Log.i("$TAG Default account changed, forcing See All contacts filter")
+
+        listViewModel.changeContactsFilter(
+            onlyLinphoneContacts = false,
+            onlySipContacts = false
         )
-        listViewModel.applyCurrentDefaultAccountFilter()
     }
 
     override fun onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation? {
-        if (findNavController().currentDestination?.id == R.id.newContactFragment
-        ) {
-            // Holds fragment in place while new fragment slides over it
+        if (findNavController().currentDestination?.id == R.id.newContactFragment) {
             return AnimationUtils.loadAnimation(activity, R.anim.hold)
         }
+
         return super.onCreateAnimation(transit, enter, nextAnim)
     }
 
@@ -133,7 +135,6 @@ class ContactsListFragment : AbstractMainFragment() {
         binding.viewModel = listViewModel
         observeToastEvents(listViewModel)
 
-        // Disabled by default, may be enabled in onResume()
         binding.contactsListSwipeRefresh.isEnabled = false
         binding.contactsListSwipeRefresh.setOnRefreshListener(swipeToRefreshListener)
 
@@ -153,13 +154,9 @@ class ContactsListFragment : AbstractMainFragment() {
             binding.contactsList.clipToOutline = filtered
         }
 
-        listViewModel.contactsList.observe(
-            viewLifecycleOwner
-        ) {
+        listViewModel.contactsList.observe(viewLifecycleOwner) {
             adapter.submitList(it)
 
-            // Wait for adapter to have items before setting it in the RecyclerView,
-            // otherwise scroll position isn't retained
             if (binding.contactsList.adapter != adapter) {
                 binding.contactsList.adapter = adapter
             }
@@ -168,13 +165,9 @@ class ContactsListFragment : AbstractMainFragment() {
             listViewModel.fetchInProgress.value = false
         }
 
-        listViewModel.favouritesList.observe(
-            viewLifecycleOwner
-        ) {
+        listViewModel.favouritesList.observe(viewLifecycleOwner) {
             favouritesAdapter.submitList(it)
 
-            // Wait for adapter to have items before setting it in the RecyclerView,
-            // otherwise scroll position isn't retained
             if (binding.favouritesContactsList.adapter != favouritesAdapter) {
                 binding.favouritesContactsList.adapter = favouritesAdapter
             }
@@ -186,12 +179,15 @@ class ContactsListFragment : AbstractMainFragment() {
             it.consume { pair ->
                 val contactName = pair.first
                 val file = pair.second
+
                 Log.i(
                     "$TAG Friend [$contactName] was exported as vCard file [${file.absolutePath}], sharing it"
                 )
+
                 shareContact(contactName, file)
             }
         }
+        listViewModel.areAllContactsDisplayed.value == true
 
         listViewModel.cardDavSynchronizationCompletedEvent.observe(viewLifecycleOwner) {
             it.consume {
@@ -204,18 +200,17 @@ class ContactsListFragment : AbstractMainFragment() {
             sharedViewModel.showNewContactEvent.value = Event(true)
         }
 
-        binding.setFilterClickListener {
-            showFilterPopupMenu(binding.topBar.extraAction)
+//        binding.setFilterClickListener {
+//            showFilterPopupMenu(binding.filterButton)
+//        }
+
+        binding.setOnBackClicked {
+            handleBackPressed()
         }
 
         sharedViewModel.showContactEvent.observe(viewLifecycleOwner) {
             it.consume { refKey ->
-                Log.i("$TAG Displaying contact with ref key [$refKey]")
-                val navController = binding.contactsNavContainer.findNavController()
-                val action = ContactFragmentDirections.actionGlobalContactFragment(
-                    refKey
-                )
-                navController.navigate(action)
+                openContact(refKey)
             }
         }
 
@@ -223,8 +218,10 @@ class ContactsListFragment : AbstractMainFragment() {
             it.consume {
                 if (findNavController().currentDestination?.id == R.id.contactsListFragment) {
                     Log.i("$TAG Opening contact editor for creating new contact")
+
                     val action =
                         ContactsListFragmentDirections.actionContactsListFragmentToNewContactFragment()
+
                     findNavController().navigate(action)
                 }
             }
@@ -241,6 +238,7 @@ class ContactsListFragment : AbstractMainFragment() {
                 if (findNavController().currentDestination?.id == R.id.contactsListFragment) {
                     val path = bundle.getString("path", "")
                     val isMedia = bundle.getBoolean("isMedia", false)
+
                     if (path.isEmpty()) {
                         Log.e("$TAG Can't navigate to file viewer for empty path!")
                         return@consume
@@ -249,6 +247,7 @@ class ContactsListFragment : AbstractMainFragment() {
                     Log.i(
                         "$TAG Navigating to [${if (isMedia) "media" else "file"}] viewer fragment with path [$path]"
                     )
+
                     if (isMedia) {
                         val intent = Intent(requireActivity(), MediaViewerActivity::class.java)
                         intent.putExtras(bundle)
@@ -262,15 +261,23 @@ class ContactsListFragment : AbstractMainFragment() {
             }
         }
 
-        // AbstractMainFragment related
-
         listViewModel.title.value = getString(R.string.bottom_navigation_contacts_label)
+
         setViewModel(listViewModel)
-        initViews(
-            binding.slidingPaneLayout,
-            binding.topBar,
-            binding.bottomNavBar,
-            R.id.contactsListFragment
+
+        // Default filter: See All
+        listViewModel.changeContactsFilter(
+            onlyLinphoneContacts = false,
+            onlySipContacts = false
+        )
+
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    handleBackPressed()
+                }
+            }
         )
 
         if (ContextCompat.checkSelfPermission(
@@ -297,15 +304,51 @@ class ContactsListFragment : AbstractMainFragment() {
             val cardDavFriendList = core.friendsLists.find {
                 it.type == FriendList.Type.CardDAV
             }
+
             val cardDavFriendListFound = cardDavFriendList != null
+
             if (cardDavFriendListFound) {
-                Log.i("$TAG CardDAV friend list [${cardDavFriendList.displayName}] found, enabling swipe to refresh")
+                Log.i(
+                    "$TAG CardDAV friend list [${cardDavFriendList?.displayName}] found, enabling swipe to refresh"
+                )
             } else {
                 Log.i("$TAG No CardDAV friend list was found, disabling swipe to refresh")
             }
+
             coreContext.postOnMainThread {
                 binding.contactsListSwipeRefresh.isEnabled = cardDavFriendListFound
             }
+        }
+    }
+
+    private fun openContact(refKey: String) {
+        try {
+            Log.i("$TAG Displaying contact with ref key [$refKey]")
+
+            val navController = binding.contactsNavContainer.findNavController()
+
+            val action = ContactFragmentDirections.actionGlobalContactFragment(
+                refKey
+            )
+
+            navController.navigate(action)
+
+            if (!binding.slidingPaneLayout.isOpen) {
+                Log.i("$TAG Opening sliding pane to show contact details")
+                binding.slidingPaneLayout.openPane()
+            }
+        } catch (e: IllegalArgumentException) {
+            Log.e("$TAG Failed to open ContactFragment: $e")
+        } catch (e: IllegalStateException) {
+            Log.e("$TAG Failed to open sliding pane / contacts nav controller: $e")
+        }
+    }
+
+    private fun handleBackPressed() {
+        if (binding.slidingPaneLayout.isOpen) {
+            binding.slidingPaneLayout.closePane()
+        } else {
+            findNavController().popBackStack()
         }
     }
 
@@ -317,22 +360,20 @@ class ContactsListFragment : AbstractMainFragment() {
                     model.isStored,
                     isReadOnly = model.isReadOnly,
                     isNative = model.isNative,
-                    { // onDismiss
-                        adapter.resetSelection()
-                    },
-                    { // onFavourite
-                        listViewModel.toggleContactFavoriteFlag(model)
-                    },
-                    { // onShare
+                    { adapter.resetSelection() },
+                    { listViewModel.toggleContactFavoriteFlag(model) },
+                    {
                         Log.i(
                             "$TAG Sharing friend [${model.name.value}], exporting it as vCard file first"
                         )
+
                         listViewModel.exportContactAsVCard(model.friend)
                     },
-                    { // onDelete
+                    {
                         showDeleteConfirmationDialog(model)
                     }
                 )
+
                 modalBottomSheet.show(parentFragmentManager, ContactsListMenuDialogFragment.TAG)
                 bottomSheetDialog = modalBottomSheet
             }
@@ -352,9 +393,10 @@ class ContactsListFragment : AbstractMainFragment() {
             requireContext().getString(R.string.file_provider),
             file
         )
+
         Log.i("$TAG Public URI for vCard file is [$publicUri], starting intent chooser")
 
-        val sendIntent: Intent = Intent().apply {
+        val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_STREAM, publicUri)
             putExtra(Intent.EXTRA_SUBJECT, name)
@@ -362,6 +404,7 @@ class ContactsListFragment : AbstractMainFragment() {
         }
 
         val shareIntent = Intent.createChooser(sendIntent, null)
+
         try {
             startActivity(shareIntent)
         } catch (anfe: ActivityNotFoundException) {
@@ -376,6 +419,7 @@ class ContactsListFragment : AbstractMainFragment() {
             null,
             false
         )
+
         popupView.seeAllSelected = listViewModel.areAllContactsDisplayed.value == true
         popupView.showLinphoneFilter = listViewModel.isDefaultAccountLinphone.value == true
 
@@ -393,6 +437,7 @@ class ContactsListFragment : AbstractMainFragment() {
                     onlySipContacts = false
                 )
             }
+
             popupWindow.dismiss()
         }
 
@@ -403,6 +448,7 @@ class ContactsListFragment : AbstractMainFragment() {
                     onlySipContacts = false
                 )
             }
+
             popupWindow.dismiss()
         }
 
@@ -413,16 +459,17 @@ class ContactsListFragment : AbstractMainFragment() {
                     onlySipContacts = true
                 )
             }
+
             popupWindow.dismiss()
         }
 
-        // Elevation is for showing a shadow around the popup
         popupWindow.elevation = 20f
         popupWindow.showAsDropDown(view, 0, 0, Gravity.BOTTOM)
     }
 
     private fun showDeleteConfirmationDialog(contactModel: ContactAvatarModel) {
         val model = ConfirmationDialogModel()
+
         val dialog = DialogUtils.getDeleteContactConfirmationDialog(
             requireActivity(),
             model,

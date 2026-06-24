@@ -88,6 +88,8 @@ class MainActivity : GenericActivity() {
         private const val CHAT_FRAGMENT_ID = 3
         private const val MEETINGS_FRAGMENT_ID = 4
 
+        const val EXTRA_OPEN_HOME = "open_home"
+
         const val ARGUMENTS_CHAT = "Chat"
         const val ARGUMENTS_CONVERSATION_ID = "ConversationId"
     }
@@ -491,6 +493,19 @@ class MainActivity : GenericActivity() {
 
     private fun goToLatestVisitedFragment() {
         try {
+
+            if (intent.getBooleanExtra(EXTRA_OPEN_HOME, false)) {
+                Log.i("$TAG Opened from Splash/Login, forcing Home fragment")
+
+                getPreferences(MODE_PRIVATE).edit {
+                    putInt(DEFAULT_FRAGMENT_KEY, HOME_FRAGMENT_ID)
+                }
+
+                navigatedToDefaultFragment = true
+                intent.removeExtra(EXTRA_OPEN_HOME)
+                return
+            }
+
             // Prevent navigating to default fragment upon rotation (we only want to do it on first start)
             if (intent.action == Intent.ACTION_MAIN && intent.type == null && intent.data == null) {
                 if (viewModel.mainIntentHandled) {
@@ -504,11 +519,7 @@ class MainActivity : GenericActivity() {
                 }
             }
 
-            val defaultFragmentId = getPreferences(MODE_PRIVATE).getInt(
-                DEFAULT_FRAGMENT_KEY,
-                HOME_FRAGMENT_ID,
-//                HISTORY_FRAGMENT_ID
-            )
+            val defaultFragmentId = HOME_FRAGMENT_ID
             Log.i(
                 "$TAG Trying to navigate to set default destination [$defaultFragmentId]"
             )
