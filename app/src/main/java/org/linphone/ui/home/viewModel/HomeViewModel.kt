@@ -13,6 +13,10 @@ constructor() : ViewModel() {
         MutableLiveData()
     }
 
+    val navigateToMenuEvent: MutableLiveData<Event<Boolean>> by lazy {
+        MutableLiveData()
+    }
+
     val navigateToFriendsEvent: MutableLiveData<Event<Boolean>> by lazy {
         MutableLiveData()
     }
@@ -81,6 +85,11 @@ constructor() : ViewModel() {
     @UiThread
     fun navigateToFriends() {
         navigateToFriendsEvent.value = Event(true)
+    }
+
+    @UiThread
+    fun navigateToMenu() {
+        navigateToMenuEvent.value = Event(true)
     }
 
     @UiThread

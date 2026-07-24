@@ -12,6 +12,8 @@
 
     <color name="orange_main_100">#dc1920</color>
     <color name="orange_main_500">#dc1920</color>
+    <color name="swiss_pack_main">#303030</color>
+    <color name="swiss_pack_main2">#595959</color>
 
     <color name="gray_main2_100">#EEF6F8</color>
     <color name="gray_main2_200">#DFECF2</color>
@@ -20,7 +22,7 @@
     <color name="gray_main2_500">#6C7A87</color>
     <color name="gray_main2_600">#4E6074</color>
     <color name="gray_main2_700">#364860</color>
-    <color name="gray_main2_800">#22334D</color>
+    <color name="gray_main2_800">#595959</color>
 
     <color name="gray_100">#F9F9F9</color>
     <color name="gray_200">#EDEDED</color>

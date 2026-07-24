@@ -168,7 +168,7 @@ class MoreFragment : AbstractMainFragment() {
 
             OPTION_ABOUT -> {
                 Log.i("$TAG About clicked")
-                openUrl("https://system.swisspack.us/about")
+                openUrl("https://system.swisspack.us/about-us")
             }
 
 //            OPTION_LOGOUT -> {

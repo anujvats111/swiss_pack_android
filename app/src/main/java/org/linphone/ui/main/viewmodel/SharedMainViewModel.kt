@@ -127,6 +127,9 @@ class SharedMainViewModel
 
     var displayedChatRoom: ChatRoom? = null // Prevents the need to go look for the chat room
 
+    /** Set before navigating to [ConversationsListFragment] to open [ConversationFragment] on arrival. */
+    var conversationIdToOpen: String? = null
+
     val showConversationEvent: MutableLiveData<Event<String>> by lazy {
         MutableLiveData()
     }

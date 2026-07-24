@@ -52,18 +52,35 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-
-                <ImageView
+                <LinearLayout
                     android:id="@+id/iv_logo"
-                    style="@style/icon_top_bar_button_style"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:contentDescription="@string/content_description_go_back_icon"
-                    android:src="@drawable/logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent">
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/logo_" />
+
+                    <ImageView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:layout_marginStart="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/logo_text"
+                        app:tint="?attr/color_text" />
+
+
+                </LinearLayout>
+
+
 
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -85,7 +102,7 @@
                     android:layout_height="50dp"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:background="@drawable/edit_text_background"
+                    android:background="@drawable/edit_text_background1"
                     android:hint="@string/username"
                     android:inputType="text|textNoSuggestions"
                     android:paddingStart="20dp"
@@ -119,7 +136,7 @@
                     android:layout_height="50dp"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:background="@drawable/edit_text_background"
+                    android:background="@drawable/edit_text_background1"
                     android:hint="@string/password"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
@@ -208,7 +225,7 @@
                     android:layout_marginBottom="@dimen/screen_bottom_margin"
                     android:gravity="center"
                     android:text="Sign Up"
-                    android:textColor="@color/bc_black"
+                    android:textColor="?attr/color_text"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/no_account_yet"
                     app:layout_constraintTop_toBottomOf="@id/btn_login_container"

@@ -51,24 +51,38 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp">
 
-                    <ImageView
-                        android:id="@+id/logo"
-                        android:layout_width="150dp"
-                        android:layout_height="40dp"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitStart"
-                        android:src="@drawable/logo" />
-
-                    <Space
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content">
+
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="45dp"
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/logo_" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="45dp"
+                            android:adjustViewBounds="true"
+                            android:layout_marginStart="15dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/logo_text"
+                            app:tint="@color/bc_white" />
+
+
+
+                    </LinearLayout>
+
 
                     <ImageView
                         android:id="@+id/menu_more"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:onClick="@{() -> viewModel.navigateToMore()}"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:onClick="@{() -> viewModel.navigateToMenu()}"
                         android:padding="5dp"
                         android:src="@drawable/dots_three_vertical"
                         android:tint="@color/bc_white"
@@ -181,10 +195,9 @@
 
                 </HorizontalScrollView>
 
-                <!-- Social Community -->
-                <TextView
+                 <TextView
                     style="@style/HomeSectionTitle"
-                    android:text="Social Community" />
+                    android:text="Social Reach" />
 
                 <HorizontalScrollView
                     android:layout_width="match_parent"
@@ -200,7 +213,7 @@
                             android:id="@+id/menu_billboard"
                             style="@style/HomeMenuTileHorizontal"
                             android:onClick="@{() -> viewModel.navigateToBillboard()}"
-                            android:text="Billboard" />
+                            android:text="Community" />
 
                         <TextView
                             android:id="@+id/menu_broadcast"

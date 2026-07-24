@@ -390,6 +390,9 @@ abstract class AbstractMainFragment : GenericMainFragment() {
     }
 
     private fun goToConversationsList() {
+        Log.i(TAG, "goToConversationsList() called")
+        Log.i(TAG, "Current fragment = $currentFragmentId")
+
         Log.i("$TAG Navigating to conversations list")
         when (currentFragmentId) {
             R.id.contactsListFragment -> {

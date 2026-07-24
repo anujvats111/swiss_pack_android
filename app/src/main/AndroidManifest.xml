@@ -2,6 +2,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <queries>
+        <package android:name="com.openai.chatgpt" />
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="com.facebook.stella" />
+
+        <!-- Notebook Apps -->
+        <package android:name="com.google.android.keep" />
+        <package android:name="com.samsung.android.app.notes" />
+        <package android:name="com.microsoft.office.onenote" />
+        <package android:name="com.evernote" />
+        <package android:name="notion.id" />
+
+        <!-- Calendar intent -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_CALENDAR" />
+        </intent>
+
+    </queries>
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -262,6 +282,9 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
+
+
 
     </application>
 

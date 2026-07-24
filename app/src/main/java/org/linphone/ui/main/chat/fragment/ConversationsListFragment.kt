@@ -300,9 +300,15 @@ class ConversationsListFragment : AbstractMainFragment() {
         }
 
         sharedViewModel.showConversationEvent.observe(viewLifecycleOwner) {
+            Log.i(TAG, "showConversationEvent observer triggered")
+
             it.consume { conversationId ->
+                Log.i(TAG, "Received conversationId = $conversationId")
+
                 Log.i("$TAG Navigating to ConversationFragment with ID [$conversationId]")
-                openConversation(conversationId)
+                binding.chatNavContainer.post {
+                    openConversation(conversationId)
+                }
             }
         }
 
@@ -444,16 +450,20 @@ class ConversationsListFragment : AbstractMainFragment() {
          * Now we manually open sliding pane inside openConversation().
          */
 
-        val args = arguments
-        if (args != null) {
-            val conversationId = args.getString(ARGUMENTS_CONVERSATION_ID)
+        openPendingConversationIfAny()
+    }
 
-            if (!conversationId.isNullOrEmpty()) {
-                Log.i("$TAG Found conversation ID [$conversationId] in arguments")
+    private fun openPendingConversationIfAny() {
+        val conversationId = sharedViewModel.conversationIdToOpen
+            ?: arguments?.getString(ARGUMENTS_CONVERSATION_ID)?.takeIf { it.isNotEmpty() }
+            ?: return
 
-                sharedViewModel.showConversationEvent.value = Event(conversationId)
-                args.clear()
-            }
+        sharedViewModel.conversationIdToOpen = null
+        arguments?.remove(ARGUMENTS_CONVERSATION_ID)
+
+        Log.i("$TAG Opening pending conversation [$conversationId] in ConversationFragment")
+        binding.chatNavContainer.post {
+            openConversation(conversationId)
         }
     }
 
@@ -505,6 +515,8 @@ class ConversationsListFragment : AbstractMainFragment() {
             Log.i("$TAG Keep app alive setting is enabled, refreshing view just in case")
             listViewModel.filter()
         }
+
+        openPendingConversationIfAny()
     }
 
     override fun onPause() {

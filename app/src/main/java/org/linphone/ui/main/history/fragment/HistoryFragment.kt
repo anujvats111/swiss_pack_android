@@ -28,6 +28,8 @@ import android.widget.PopupWindow
 import androidx.annotation.UiThread
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
+import androidx.core.os.bundleOf
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,6 +39,9 @@ import org.linphone.core.tools.Log
 import org.linphone.databinding.HistoryFragmentBinding
 import org.linphone.databinding.HistoryPopupMenuBinding
 import org.linphone.ui.GenericActivity
+import org.linphone.ui.main.MainActivity.Companion.ARGUMENTS_CONVERSATION_ID
+import org.linphone.ui.main.chat.fragment.ConversationsListFragment
+import org.linphone.ui.main.chat.fragment.ConversationsListFragmentDirections
 import org.linphone.ui.main.fragment.SlidingPaneChildFragment
 import org.linphone.ui.main.history.adapter.ContactHistoryListAdapter
 import org.linphone.utils.ConfirmationDialogModel
@@ -147,10 +152,11 @@ class HistoryFragment : SlidingPaneChildFragment() {
         }
 
         viewModel.goToConversationEvent.observe(viewLifecycleOwner) {
-            it.consume { conversationId ->
-                Log.i("$TAG Going to conversation [$conversationId]")
-                sharedViewModel.showConversationEvent.value = Event(conversationId)
-                sharedViewModel.navigateToConversationsEvent.value = Event(true)
+            it.consume { target ->
+                Log.i(
+                    "$TAG Going to conversation [${target.conversationId}], group=${target.isGroup}"
+                )
+                navigateToConversation(target.conversationId, target.isGroup)
             }
         }
 
@@ -184,6 +190,44 @@ class HistoryFragment : SlidingPaneChildFragment() {
 
         binding.setCopyPeerSipUriClickListener {
             copyNumberOrAddressToClipboard(viewModel.callLogModel.value?.sipUri.orEmpty())
+        }
+    }
+
+    private fun navigateToConversation(conversationId: String, isGroup: Boolean) {
+        sharedViewModel.conversationIdToOpen = conversationId
+
+        val mainNavController = requireActivity().findNavController(R.id.main_nav_container)
+        val chatListMode = if (isGroup) {
+            ConversationsListFragment.CHAT_MODE_GROUP
+        } else {
+            ConversationsListFragment.CHAT_MODE_ONE_TO_ONE
+        }
+
+        if (mainNavController.currentDestination?.id == R.id.conversationsListFragment) {
+            sharedViewModel.showConversationEvent.postValue(Event(conversationId))
+            return
+        }
+
+        val args = bundleOf(
+            ConversationsListFragment.ARG_CHAT_LIST_MODE to chatListMode,
+            ARGUMENTS_CONVERSATION_ID to conversationId
+        )
+
+        try {
+            when (mainNavController.currentDestination?.id) {
+                R.id.historyListFragment -> {
+                    val action =
+                        HistoryListFragmentDirections.actionHistoryListFragmentToConversationsListFragment()
+                    mainNavController.navigate(action.actionId, args)
+                }
+                else -> {
+                    val action =
+                        ConversationsListFragmentDirections.actionGlobalConversationsListFragment()
+                    mainNavController.navigate(action.actionId, args)
+                }
+            }
+        } catch (ise: IllegalStateException) {
+            Log.e("$TAG Failed to navigate to conversation [$conversationId]: $ise")
         }
     }
 

@@ -319,8 +319,8 @@
     </style>
 
     <style name="HomeMenuTileHorizontal">
-        <item name="android:layout_width">115dp</item>
-        <item name="android:layout_height">85dp</item>
+        <item name="android:layout_width">105dp</item>
+        <item name="android:layout_height">75dp</item>
         <item name="android:layout_marginTop">8dp</item>
         <item name="android:layout_marginEnd">20dp</item>
         <item name="android:background">@drawable/bg_home_menu_tile</item>
