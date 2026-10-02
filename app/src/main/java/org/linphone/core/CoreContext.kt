@@ -667,6 +667,31 @@ class CoreContext
         core.start()
     }
 
+    /**
+     * SwissPack fix (one-time): accounts created before the login fix still have
+     * "apply international prefix" enabled, which turns local numbers into +<cc>... usernames
+     * that the SwissPack server answers with 404 "User not found".
+     * Runs only once; users can still re-enable the option in account settings afterwards.
+     */
+    @WorkerThread
+    private fun disableInternationalPrefixOnSwissPackAccounts() {
+        val key = "swisspack_intl_prefix_fix_done"
+        if (core.config.getBool("app", key, false)) return
+
+        for (account in core.accountList) {
+            val params = account.params
+            if (params.identityAddress?.domain == "system.swisspack.us" &&
+                params.useInternationalPrefixForCallsAndChats
+            ) {
+                val clone = params.clone()
+                clone.useInternationalPrefixForCallsAndChats = false
+                account.params = clone
+                Log.w("$TAG Disabled international prefix for account [${params.identityAddress?.asStringUriOnly()}]")
+            }
+        }
+        core.config.setBool("app", key, true)
+    }
+
     @WorkerThread
     fun onCoreStarted() {
         Log.i("$TAG Core started, updating configuration if required")
@@ -686,6 +711,8 @@ class CoreContext
         for (path in paths) {
             Log.i("$TAG Adding path [$path] to list of directories from which Core is allowed to delete files from")
         }
+
+        disableInternationalPrefixOnSwissPackAccounts()
 
         val currentVersion = BuildConfig.VERSION_CODE
         val oldVersion = corePreferences.linphoneConfigurationVersion

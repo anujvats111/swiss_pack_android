@@ -265,6 +265,9 @@ class ContactsListFragment : AbstractMainFragment() {
 
         setViewModel(listViewModel)
 
+        // SwissPack fix: enables "Message" from a Friend to navigate to the conversation
+        initCustomNavigation(binding.slidingPaneLayout, R.id.contactsListFragment)
+
         // Default filter: See All
         listViewModel.changeContactsFilter(
             onlyLinphoneContacts = false,

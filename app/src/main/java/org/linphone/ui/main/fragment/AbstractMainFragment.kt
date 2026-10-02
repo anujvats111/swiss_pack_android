@@ -73,6 +73,16 @@ abstract class AbstractMainFragment : GenericMainFragment() {
 
     private var currentFragmentId: Int = 0
 
+    // SwissPack: custom list screens don't call initViews() (custom top bar / no bottom nav),
+    // so currentFragmentId stays 0 and cross-screen navigation events were silently ignored
+    // (e.g. Friends > contact > "Message" did nothing). This id is only used as navigation
+    // source; it is NOT pushed to currentlyDisplayedFragment so the app still starts on Home.
+    private var customNavigationFragmentId: Int = 0
+
+    private fun navigationSourceFragmentId(): Int {
+        return if (currentFragmentId != 0) currentFragmentId else customNavigationFragmentId
+    }
+
     private lateinit var navigationBar: View
 
     private lateinit var viewModel: AbstractMainViewModel
@@ -311,6 +321,51 @@ abstract class AbstractMainFragment : GenericMainFragment() {
         }
     }
 
+    /**
+     * SwissPack: lightweight replacement for initViews() for custom list screens.
+     * Registers cross-list navigation events (contacts <-> conversations, ...) and lets child
+     * fragments close the sliding pane through closeSlidingPaneEvent.
+     * Does not touch top bar, bottom nav bar, back press callbacks or the default start page.
+     */
+    protected fun initCustomNavigation(slidingPane: SlidingPaneLayout?, @IdRes fragmentId: Int) {
+        customNavigationFragmentId = fragmentId
+
+        sharedViewModel.navigateToContactsEvent.observe(viewLifecycleOwner) {
+            it.consume {
+                if (navigationSourceFragmentId() != R.id.contactsListFragment) goToContactsList()
+            }
+        }
+
+        sharedViewModel.navigateToHistoryEvent.observe(viewLifecycleOwner) {
+            it.consume {
+                if (navigationSourceFragmentId() != R.id.historyListFragment) goToHistoryList()
+            }
+        }
+
+        sharedViewModel.navigateToConversationsEvent.observe(viewLifecycleOwner) {
+            it.consume {
+                if (navigationSourceFragmentId() != R.id.conversationsListFragment) goToConversationsList()
+            }
+        }
+
+        sharedViewModel.navigateToMeetingsEvent.observe(viewLifecycleOwner) {
+            it.consume {
+                if (navigationSourceFragmentId() != R.id.meetingsListFragment) goToMeetingsList()
+            }
+        }
+
+        if (slidingPane != null) {
+            sharedViewModel.closeSlidingPaneEvent.observe(viewLifecycleOwner) {
+                it.consume {
+                    if (slidingPane.isSlideable && slidingPane.isOpen) {
+                        Log.d("$TAG Closing sliding pane (custom navigation)")
+                        slidingPane.closePane()
+                    }
+                }
+            }
+        }
+    }
+
     private fun initNavigation(@IdRes fragmentId: Int) {
         currentFragmentId = fragmentId
 
@@ -349,7 +404,7 @@ abstract class AbstractMainFragment : GenericMainFragment() {
 
     private fun goToContactsList() {
         Log.i("$TAG Navigating to contacts list")
-        when (currentFragmentId) {
+        when (navigationSourceFragmentId()) {
             R.id.conversationsListFragment -> {
                 Log.i("$TAG Leaving conversations list")
                 val action = ConversationsListFragmentDirections.actionConversationsListFragmentToContactsListFragment()
@@ -370,7 +425,7 @@ abstract class AbstractMainFragment : GenericMainFragment() {
 
     private fun goToHistoryList() {
         Log.i("$TAG Navigating to history list")
-        when (currentFragmentId) {
+        when (navigationSourceFragmentId()) {
             R.id.conversationsListFragment -> {
                 Log.i("$TAG Leaving conversations list")
                 val action = ConversationsListFragmentDirections.actionConversationsListFragmentToHistoryListFragment()
@@ -394,7 +449,7 @@ abstract class AbstractMainFragment : GenericMainFragment() {
         Log.i(TAG, "Current fragment = $currentFragmentId")
 
         Log.i("$TAG Navigating to conversations list")
-        when (currentFragmentId) {
+        when (navigationSourceFragmentId()) {
             R.id.contactsListFragment -> {
                 Log.i("$TAG Leaving contacts list")
                 val action = ContactsListFragmentDirections.actionContactsListFragmentToConversationsListFragment()
@@ -415,7 +470,7 @@ abstract class AbstractMainFragment : GenericMainFragment() {
 
     private fun goToMeetingsList() {
         Log.i("$TAG Navigating to meetings list")
-        when (currentFragmentId) {
+        when (navigationSourceFragmentId()) {
             R.id.conversationsListFragment -> {
                 Log.i("$TAG Leaving conversations list")
                 val action = ConversationsListFragmentDirections.actionConversationsListFragmentToMeetingsListFragment()

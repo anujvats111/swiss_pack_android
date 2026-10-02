@@ -63,6 +63,7 @@ import org.linphone.core.tools.Log
 import org.linphone.databinding.MainActivityBinding
 import org.linphone.ui.GenericActivity
 import org.linphone.ui.assistant.AssistantActivity
+import org.linphone.ui.main.chat.fragment.ConversationsListFragment
 import org.linphone.ui.main.chat.fragment.ConversationsListFragmentDirections
 import org.linphone.utils.PasswordDialogModel
 import org.linphone.ui.main.viewmodel.MainViewModel
@@ -624,34 +625,89 @@ class MainActivity : GenericActivity() {
         coreContext.postOnCoreThread { core ->
             if (intent.hasExtra(ARGUMENTS_CHAT)) {
                 Log.i("$TAG Intent has [Chat] extra")
+
+                // SwissPack fix: open the same list as Home menu does (Chat or Group Chat)
+                // depending on the conversation type, so back press behaves the same way
+                val notifiedConversationId = intent.extras?.getString(ARGUMENTS_CONVERSATION_ID, "").orEmpty()
+                val notifiedChatRoom = if (notifiedConversationId.isNotEmpty()) {
+                    core.searchChatRoomByIdentifier(notifiedConversationId)
+                } else {
+                    null
+                }
+                val chatListMode = when {
+                    notifiedChatRoom == null -> ConversationsListFragment.CHAT_MODE_ALL
+                    LinphoneUtils.isChatRoomAGroup(notifiedChatRoom) -> ConversationsListFragment.CHAT_MODE_GROUP
+                    else -> ConversationsListFragment.CHAT_MODE_ONE_TO_ONE
+                }
+                Log.i("$TAG Chat list mode for conversation [$notifiedConversationId] is [$chatListMode]")
+
                 coreContext.postOnMainThread {
                     try {
                         Log.i("$TAG Trying to go to Conversations fragment")
                         val args = intent.extras
                         val conversationId = args?.getString(ARGUMENTS_CONVERSATION_ID, "")
-                        if (conversationId.isNullOrEmpty()) {
-                            Log.w("$TAG Found [Chat] extra but no conversation ID!")
-                        } else {
-                            Log.i("$TAG Found [Chat] extra with conversation ID [$conversationId]")
-                            sharedViewModel.showConversationEvent.value = Event(conversationId)
-                        }
                         args?.clear()
 
-                        if (findNavController().currentDestination?.id == R.id.conversationsListFragment) {
+                        val navController = findNavController()
+                        val alreadyInConversationsList =
+                            navController.currentDestination?.id == R.id.conversationsListFragment
+                        val currentChatListMode = navController.currentBackStackEntry?.arguments?.getInt(
+                            ConversationsListFragment.ARG_CHAT_LIST_MODE,
+                            ConversationsListFragment.CHAT_MODE_ALL
+                        ) ?: ConversationsListFragment.CHAT_MODE_ALL
+                        val sameList = alreadyInConversationsList && (
+                            chatListMode == ConversationsListFragment.CHAT_MODE_ALL ||
+                                chatListMode == currentChatListMode
+                            )
+
+                        // Same stack as when coming from Home menu: Home -> Chat / Group Chat list
+                        val navOptionsBuilder = NavOptions.Builder()
+                        navOptionsBuilder.setPopUpTo(R.id.homeMenuFragment, false)
+                        navOptionsBuilder.setLaunchSingleTop(true)
+                        val navOptions = navOptionsBuilder.build()
+
+                        if (sameList) {
+                            if (conversationId.isNullOrEmpty()) {
+                                Log.w("$TAG Found [Chat] extra but no conversation ID!")
+                            } else {
+                                Log.i("$TAG Found [Chat] extra with conversation ID [$conversationId]")
+                                sharedViewModel.showConversationEvent.value = Event(conversationId)
+                            }
                             Log.w(
-                                "$TAG Current destination is already conversations list, skipping navigation"
+                                "$TAG Current destination is already the right conversations list, skipping navigation"
+                            )
+                        } else if (alreadyInConversationsList) {
+                            // Other list currently displayed (ex: Group Chat but 1-1 message tapped),
+                            // replace it by the right one and let it open the conversation
+                            Log.i(
+                                "$TAG Replacing conversations list mode [$currentChatListMode] by [$chatListMode]"
+                            )
+                            val listArgs = bundleOf(
+                                ConversationsListFragment.ARG_CHAT_LIST_MODE to chatListMode
+                            )
+                            if (conversationId.isNullOrEmpty()) {
+                                Log.w("$TAG Found [Chat] extra but no conversation ID!")
+                            } else {
+                                sharedViewModel.conversationIdToOpen = conversationId
+                                listArgs.putString(ARGUMENTS_CONVERSATION_ID, conversationId)
+                            }
+                            navController.navigate(
+                                R.id.conversationsListFragment,
+                                listArgs,
+                                navOptions
                             )
                         } else {
-                            val navOptionsBuilder = NavOptions.Builder()
-                            navOptionsBuilder.setPopUpTo(
-                                findNavController().currentDestination?.id ?: R.id.historyListFragment,
-                                true
-                            )
-                            navOptionsBuilder.setLaunchSingleTop(true)
-                            val navOptions = navOptionsBuilder.build()
-                            findNavController().navigate(
+                            if (conversationId.isNullOrEmpty()) {
+                                Log.w("$TAG Found [Chat] extra but no conversation ID!")
+                            } else {
+                                Log.i("$TAG Found [Chat] extra with conversation ID [$conversationId]")
+                                sharedViewModel.showConversationEvent.value = Event(conversationId)
+                            }
+                            navController.navigate(
                                 R.id.conversationsListFragment,
-                                args,
+                                bundleOf(
+                                    ConversationsListFragment.ARG_CHAT_LIST_MODE to chatListMode
+                                ),
                                 navOptions
                             )
                         }

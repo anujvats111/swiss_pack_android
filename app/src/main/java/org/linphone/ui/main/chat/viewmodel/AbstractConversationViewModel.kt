@@ -146,14 +146,14 @@ abstract class AbstractConversationViewModel : GenericViewModel() {
             if (LinphoneUtils.isChatRoomAGroup(chatRoom) && chatRoom.participants.size >= 2) {
                 confirmGroupCallEvent.postValue(Event(true))
             } else {
-                val firstParticipant = chatRoom.participants.firstOrNull()
-                val address = firstParticipant?.address
-                if (address != null) {
-                    Log.i("$TAG Audio calling SIP address [${address.asStringUriOnly()}]")
-                    coreContext.startAudioCall(address)
-                } else {
-                    Log.e("$TAG Failed to find participant to call!")
-                }
+                // SwissPack fix: basic (SIP SIMPLE) 1-1 chat rooms may have no participant
+                // object, fallback on peer address like ConversationModel.call() does.
+                // Also strip URI params (gr=, transport...) so we call the user, not one device.
+                val rawAddress = chatRoom.participants.firstOrNull()?.address ?: chatRoom.peerAddress
+                val address = rawAddress.clone()
+                address.clean()
+                Log.i("$TAG Audio calling SIP address [${address.asStringUriOnly()}]")
+                coreContext.startAudioCall(address)
             }
         }
     }

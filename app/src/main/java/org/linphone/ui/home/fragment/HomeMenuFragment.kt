@@ -1,6 +1,16 @@
 package org.linphone.ui.home.fragment
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import org.linphone.core.ChatMessage
+import org.linphone.core.ChatRoom
+import org.linphone.core.Core
+import org.linphone.core.CoreListenerStub
+import org.linphone.utils.LinphoneUtils
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -30,12 +40,34 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
 
     companion object {
         private const val TAG = "[Home Menu Fragment]"
+
+        // Ask only once per app process to avoid nagging the user
+        private var askedPostNotificationsPermission = false
     }
 
     private var _binding: HomeMenuFragmentBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var viewModel: HomeViewModel
+
+    // SwissPack fix: POST_NOTIFICATIONS (Android 13+) was only requested in the assistant
+    // permission screen, which can be skipped -> no incoming message/call notifications.
+    private val postNotificationsPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Log.i("$TAG POST_NOTIFICATIONS permission granted = [$granted]")
+    }
+
+    // SwissPack fix: display number of unread messages on Chat / Group Chat tiles
+    private val unreadCoreListener = object : CoreListenerStub() {
+        override fun onMessagesReceived(core: Core, chatRoom: ChatRoom, messages: Array<ChatMessage>) {
+            computeUnreadCounts(core)
+        }
+
+        override fun onChatRoomRead(core: Core, chatRoom: ChatRoom) {
+            computeUnreadCounts(core)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -47,6 +79,68 @@ class HomeMenuFragment : Fragment(R.layout.home_menu_fragment) {
         binding.lifecycleOwner = viewLifecycleOwner
 
         observeViewModel()
+        askPostNotificationsPermissionIfNeeded()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        coreContext.postOnCoreThread { core ->
+            core.addListener(unreadCoreListener)
+            computeUnreadCounts(core)
+        }
+    }
+
+    override fun onPause() {
+        coreContext.postOnCoreThread { core ->
+            core.removeListener(unreadCoreListener)
+        }
+        super.onPause()
+    }
+
+    private fun askPostNotificationsPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (askedPostNotificationsPermission) return
+        val granted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            askedPostNotificationsPermission = true
+            Log.w("$TAG POST_NOTIFICATIONS not granted, asking for it")
+            try {
+                postNotificationsPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } catch (e: Exception) {
+                Log.e("$TAG Failed to request POST_NOTIFICATIONS permission: $e")
+            }
+        }
+    }
+
+    private fun computeUnreadCounts(core: Core) {
+        var oneToOneUnread = 0
+        var groupUnread = 0
+        for (chatRoom in core.chatRooms) {
+            if (chatRoom.muted) continue
+            val count = chatRoom.unreadMessagesCount
+            if (count <= 0) continue
+            if (LinphoneUtils.isChatRoomAGroup(chatRoom)) {
+                groupUnread += count
+            } else {
+                oneToOneUnread += count
+            }
+        }
+        coreContext.postOnMainThread {
+            val b = _binding ?: return@postOnMainThread
+            b.menuChat.text = tileLabel("Chat", oneToOneUnread)
+            b.menuGroupChat.text = tileLabel("Group Chat", groupUnread)
+        }
+    }
+
+    private fun tileLabel(title: String, unread: Int): String {
+        return when {
+            unread <= 0 -> title
+            unread > 99 -> "$title\n99+ unread"
+            else -> "$title\n$unread unread"
+        }
     }
 
     private fun observeViewModel() {

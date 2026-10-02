@@ -292,11 +292,7 @@ class ConversationsListFragment : AbstractMainFragment() {
         }
 
         binding.setOnBackClicked {
-            if (binding.slidingPaneLayout.isOpen) {
-                binding.slidingPaneLayout.closePane()
-            } else {
-                findNavController().popBackStack()
-            }
+            handleBackPressed()
         }
 
         sharedViewModel.showConversationEvent.observe(viewLifecycleOwner) {
@@ -424,11 +420,7 @@ class ConversationsListFragment : AbstractMainFragment() {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (binding.slidingPaneLayout.isOpen) {
-                        binding.slidingPaneLayout.closePane()
-                    } else {
-                        findNavController().popBackStack()
-                    }
+                    handleBackPressed()
                 }
             }
         )
@@ -440,6 +432,9 @@ class ConversationsListFragment : AbstractMainFragment() {
         }
 
         setViewModel(listViewModel)
+
+        // SwissPack fix: lets ConversationFragment close the pane & cross-list navigation work
+        initCustomNavigation(binding.slidingPaneLayout, R.id.conversationsListFragment)
 
         /*
          * Do not call initViews() here because your custom XML does not use default topBar/bottomNavBar.
@@ -465,6 +460,56 @@ class ConversationsListFragment : AbstractMainFragment() {
         binding.chatNavContainer.post {
             openConversation(conversationId)
         }
+    }
+
+    /*
+     * SwissPack fix: closing the pane alone left ConversationFragment RESUMED in the background.
+     * NotificationsManager then kept treating that conversation as "currently displayed", so:
+     *  - no notification was shown for new messages in it,
+     *  - new messages were immediately marked as read (unread counter never displayed).
+     * We now pop the child nav back to its empty start destination so the fragment is paused.
+     */
+    private fun handleBackPressed() {
+        val chatNavController = try {
+            binding.chatNavContainer.findNavController()
+        } catch (e: IllegalStateException) {
+            null
+        }
+        val childDestination = chatNavController?.currentDestination?.id
+
+        if (binding.slidingPaneLayout.isOpen) {
+            if (chatNavController != null &&
+                childDestination != null &&
+                childDestination != R.id.conversationFragment &&
+                childDestination != R.id.emptyFragment
+            ) {
+                // Sub-screen (info, media, documents...) -> go back to the conversation first
+                chatNavController.popBackStack()
+                return
+            }
+            closeConversationPane()
+        } else {
+            findNavController().popBackStack()
+        }
+    }
+
+    private fun closeConversationPane() {
+        try {
+            val chatNavController = binding.chatNavContainer.findNavController()
+            if (chatNavController.currentDestination?.id != R.id.emptyFragment) {
+                if (!chatNavController.popBackStack(R.id.emptyFragment, false)) {
+                    chatNavController.navigate(R.id.emptyFragment)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("$TAG Failed to reset chat nav container: $e")
+        }
+        sharedViewModel.displayedChatRoom = null
+        coreContext.postOnCoreThread {
+            coreContext.notificationsManager.resetCurrentlyDisplayedChatRoomId()
+        }
+        binding.slidingPaneLayout.closePane()
+        listViewModel.updateUnreadMessagesCount()
     }
 
     /*

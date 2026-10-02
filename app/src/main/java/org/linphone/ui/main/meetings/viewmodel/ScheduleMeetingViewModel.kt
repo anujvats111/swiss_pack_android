@@ -171,7 +171,8 @@ class ScheduleMeetingViewModel
                 }
                 participants.value.orEmpty().size -> {
                     Log.e("$TAG No invitation sent!")
-                    showRedToast(R.string.meeting_failed_to_send_invites_toast, R.drawable.warning_circle)
+                    // anuj
+//                    showRedToast(R.string.meeting_failed_to_send_invites_toast, R.drawable.warning_circle)
                 }
                 else -> {
                     Log.w("$TAG [$failedCount] invitations couldn't have been sent for:")

@@ -342,9 +342,13 @@ open class AccountLoginViewModel
                 }
             }
 
-            newlyCreatedAccount = core.createAccount(accountParams)
+            // SwissPack fix: this was set AFTER createAccount() so it was never applied
+            // (params are copied into the account). With the prefix applied, a number typed as
+            // 5551234567 is dialed as +15551234567 which the SwissPack server rejects with
+            // 404 "User not found".
+            accountParams.useInternationalPrefixForCallsAndChats = false
 
-            accountParams.useInternationalPrefixForCallsAndChats =  false
+            newlyCreatedAccount = core.createAccount(accountParams)
 
             Log.e("accountParams_prefix_switch : " + accountParams.useInternationalPrefixForCallsAndChats.toString())
             SharedPrefsManager.getInstance().setString(Constants.username, sipIdentity.value.toString())
