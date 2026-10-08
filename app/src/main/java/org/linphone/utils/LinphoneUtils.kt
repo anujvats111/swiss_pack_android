@@ -404,8 +404,14 @@ class LinphoneUtils {
             chatRoomParams.subject = "Meeting invitation" // Won't be used
             val chatParams = chatRoomParams.chatParams ?: return null
             chatParams.ephemeralLifetime = 0 // Make sure ephemeral is disabled by default
-            chatParams.backend = ChatRoom.Backend.FlexisipChat
-            chatRoomParams.securityLevel = Conference.SecurityLevel.EndToEnd
+            // SwissPack fix: server declines (603) E2E rooms when LIME isn't available
+            if (isEndToEndEncryptedChatAvailable(coreContext.core)) {
+                chatParams.backend = ChatRoom.Backend.FlexisipChat
+                chatRoomParams.securityLevel = Conference.SecurityLevel.EndToEnd
+            } else {
+                chatParams.backend = ChatRoom.Backend.Basic
+                chatRoomParams.securityLevel = Conference.SecurityLevel.None
+            }
             return chatRoomParams
         }
 

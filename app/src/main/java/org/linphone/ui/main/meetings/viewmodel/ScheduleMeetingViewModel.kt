@@ -51,6 +51,7 @@ class ScheduleMeetingViewModel
     constructor() : GenericViewModel() {
     companion object {
         private const val TAG = "[Schedule Meeting ViewModel]"
+        private const val INVITATIONS_TIMEOUT_MS = 8000L
     }
 
     val isBroadcastSelected = MutableLiveData<Boolean>()
@@ -103,6 +104,54 @@ class ScheduleMeetingViewModel
 
     private lateinit var conferenceInfo: ConferenceInfo
 
+    // SwissPack fix: avoid staying stuck when invitations can't be sent
+    private var invitationsResultReceived = true
+    private var invitationsRetried = false
+    private var lastInvitationsParams: org.linphone.core.ConferenceParams? = null
+
+    @WorkerThread
+    private fun deleteFailedInvitationChatRooms(): Int {
+        val core = coreContext.core
+        val invitees = participants.value.orEmpty().map { it.address }
+        Log.i("$TAG Looking for failed invitation chat rooms among [${core.chatRooms.size}] for [${invitees.size}] participants")
+        var deleted = 0
+        for (chatRoom in core.chatRooms) {
+            if (chatRoom.state != ChatRoom.State.CreationFailed) continue
+            if (LinphoneUtils.isChatRoomAGroup(chatRoom)) continue
+            val remote = chatRoom.participants.firstOrNull()?.address ?: continue
+            if (invitees.any { it.weakEqual(remote) }) {
+                Log.w(
+                    "$TAG Deleting chat room [${LinphoneUtils.getConversationId(chatRoom)}] with [${remote.asStringUriOnly()}] in CreationFailed state"
+                )
+                core.deleteChatRoom(chatRoom)
+                deleted += 1
+            }
+        }
+        return deleted
+    }
+
+    @WorkerThread
+    private fun startInvitationsTimeout() {
+        coreContext.postOnCoreThreadDelayed({
+            if (!invitationsResultReceived) {
+                val params = lastInvitationsParams
+                if (!invitationsRetried && params != null && ::conferenceScheduler.isInitialized &&
+                    deleteFailedInvitationChatRooms() > 0
+                ) {
+                    Log.w("$TAG Failed chat rooms deleted, retrying to send invitations once")
+                    invitationsRetried = true
+                    startInvitationsTimeout()
+                    conferenceScheduler.sendInvitations(params)
+                    return@postOnCoreThreadDelayed
+                }
+                invitationsResultReceived = true
+                Log.e("$TAG Invitations not sent after timeout, meeting is created anyway, leaving")
+                operationInProgress.postValue(false)
+                conferenceCreatedEvent.postValue(Event(true))
+            }
+        }, INVITATIONS_TIMEOUT_MS)
+    }
+
     private val conferenceSchedulerListener = object : ConferenceSchedulerListenerStub() {
         @WorkerThread
         override fun onStateChanged(
@@ -146,8 +195,25 @@ class ScheduleMeetingViewModel
                         chatRoomParams.subject = "Meeting invitation" // Won't be used
                         val chatParams = chatRoomParams.chatParams ?: return
                         chatParams.ephemeralLifetime = 0 // Make sure ephemeral is disabled by default
-                        chatParams.backend = ChatRoom.Backend.FlexisipChat
-                        chatRoomParams.securityLevel = Conference.SecurityLevel.EndToEnd
+                        // SwissPack fix: server declines (603) E2E rooms when LIME isn't available,
+                        // use the same kind of room as normal chat in that case
+                        if (LinphoneUtils.isEndToEndEncryptedChatAvailable(coreContext.core)) {
+                            chatParams.backend = ChatRoom.Backend.FlexisipChat
+                            chatRoomParams.securityLevel = Conference.SecurityLevel.EndToEnd
+                        } else {
+                            Log.i("$TAG LIME isn't available, sending invitations using SIP simple chat")
+                            chatParams.backend = ChatRoom.Backend.Basic
+                            chatRoomParams.securityLevel = Conference.SecurityLevel.None
+                        }
+
+                        // SwissPack fix: chat rooms the server declined (603) stay in CreationFailed,
+                        // invitations are then queued forever. Delete them so fresh ones are created.
+                        deleteFailedInvitationChatRooms()
+                        invitationsResultReceived = false
+                        invitationsRetried = false
+                        lastInvitationsParams = chatRoomParams
+                        startInvitationsTimeout()
+
                         conferenceScheduler.sendInvitations(chatRoomParams)
                     } else {
                         Log.i("$TAG User didn't asked for invitations to be sent")
@@ -165,6 +231,12 @@ class ScheduleMeetingViewModel
             conferenceScheduler: ConferenceScheduler,
             failedInvitations: Array<out Address>?
         ) {
+            if (invitationsResultReceived) {
+                Log.w("$TAG Invitations result received after timeout, ignoring it")
+                return
+            }
+            invitationsResultReceived = true
+
             when (val failedCount = failedInvitations?.size) {
                 0 -> {
                     Log.i("$TAG All invitations have been sent")

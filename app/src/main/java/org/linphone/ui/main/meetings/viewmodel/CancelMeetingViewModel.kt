@@ -37,6 +37,7 @@ open class CancelMeetingViewModel
     constructor() : GenericViewModel() {
     companion object {
         private const val TAG = "[Cancel Meeting ViewModel]"
+        private const val INVITATIONS_TIMEOUT_MS = 8000L
     }
 
     val operationInProgress = MutableLiveData<Boolean>()
@@ -46,6 +47,10 @@ open class CancelMeetingViewModel
     }
 
     private var sendNotificationForCancelledConference: Boolean = false
+
+    // SwissPack fix: meeting is already cancelled on server, don't stay stuck on progress
+    // if the cancel ICS chat message can't be delivered
+    private var invitationsResultReceived = true
 
     private val conferenceSchedulerListener = object : ConferenceSchedulerListenerStub() {
         override fun onStateChanged(
@@ -61,6 +66,16 @@ open class CancelMeetingViewModel
                     Log.i("$TAG Sending cancelled meeting ICS to participants")
                     val params = LinphoneUtils.getChatRoomParamsToCancelMeeting()
                     if (params != null && !corePreferences.disableChat) {
+                        invitationsResultReceived = false
+                        coreContext.postOnCoreThreadDelayed({
+                            if (!invitationsResultReceived) {
+                                invitationsResultReceived = true
+                                Log.e("$TAG Cancelled meeting ICS not sent after timeout, meeting is cancelled anyway, leaving")
+                                conferenceScheduler.removeListener(this)
+                                operationInProgress.postValue(false)
+                                conferenceCancelledEvent.postValue(Event(true))
+                            }
+                        }, INVITATIONS_TIMEOUT_MS)
                         conferenceScheduler.sendInvitations(params)
                     } else {
                         Log.e("$TAG Failed to get chat room params to send cancelled meeting ICS!")
@@ -80,6 +95,12 @@ open class CancelMeetingViewModel
             conferenceScheduler: ConferenceScheduler,
             failedInvitations: Array<out Address>?
         ) {
+            if (invitationsResultReceived) {
+                Log.w("$TAG Invitations result received after timeout, ignoring it")
+                return
+            }
+            invitationsResultReceived = true
+
             if (failedInvitations?.isNotEmpty() == true) {
                 // TODO FIXME: show error to user
                 for (address in failedInvitations) {
